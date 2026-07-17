@@ -121,35 +121,49 @@
 
     // === 2. 画面起動時の処理 ===
     window.onload = function () {
+      // 今日の日付(MM/dd)をラベルにセット
+      const now = new Date();
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const dd = String(now.getDate()).padStart(2, '0');
+      document.getElementById('txtTodayLabel').innerText = `(${mm}/${dd})`;
+
       fetchSalesData();
     };
 
-    // === 3. 本番通信ロジック：GASから最新データを取得 ===
+    // === 3. 本番通信ロジック：GASから最新データを取得（修正版） ===
     function fetchSalesData() {
       console.log("スプレッドシートから最新データを引っ張ります...");
 
       const tbody = document.getElementById('matrixTableBody');
       if (tbody) {
-        tbody.innerHTML = `<tr><td colspan="18" style="padding: 40px; color: #a0aec0;">🔄 サーバーから最新データを通信中...</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="19" style="padding: 40px; color: #a0aec0;">🔄 サーバーから最新データを通信中...</td></tr>`;
       }
 
-      google.script.run
-        .withSuccessHandler(function (data) {
+      // 💡 config.js で定義したURLに「?action=getSales」を付与して叩く
+      const apiUrl = `${GAS_WEB_APP_URL}?action=getSales`;
+
+      fetch(apiUrl)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTPエラー! ステータス: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then(data => {
           allSalesData = data || [];
           renderMatrixTable();
 
           const now = new Date();
           document.getElementById('txtLastUpdate').innerText = `最終更新: ${now.toLocaleTimeString('ja-JP')}`;
         })
-        .withFailureHandler(function (error) {
+        .catch(error => {
           console.error("データ取得エラー:", error);
           if (tbody) {
-            tbody.innerHTML = `<tr><td colspan="18" style="padding: 40px; color: #e53e3e; font-weight: bold;">❌ データの取得に失敗しました。再試行してください。</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="19" style="padding: 40px; color: #e53e3e; font-weight: bold;">❌ データの取得に失敗しました。再試行してください。<br><small style="color:#718096;">${error.message}</small></td></tr>`;
           }
-        })
-        .getSalesLogData();
+        });
     }
-
+    
     // === 4. UI操作イベント（切り替えボタン） ===
     function switchRegister(register, element) {
       document.querySelectorAll('.segment-btn').forEach(btn => btn.classList.remove('active'));
