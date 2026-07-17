@@ -8,6 +8,7 @@
   <title>学祭レジシステム - レジ</title>
   <link rel="stylesheet" href="stylesheet.css">
   <link rel="stylesheet" href="style_cashier.css">
+  <script src="config.js"></script>
 </head>
 
 <body>
@@ -567,36 +568,29 @@
 
       // 3. 【非同期通信】GASに向けてデータを送信する
       // 💡元の確実な通信方式（no-cors）とURLタグを維持
-      fetch("<?= getAppUrl(); ?>", {
+      fetch(GAS_WEB_APP_URL, {
         method: "POST",
-        mode: "no-cors",
+        mode: "no-cors", // 💡重要: GASへの単純POST時のCORSエラーを回避
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       })
-        .then(() => {
-          // 4. 送信が成功した後の処理（元の快適な画面リセット＆トースト通知を維持）
-          closeModal();
-          resetApp();
-
-          // トーストメッセージの表示
-          const toast = document.getElementById('toastMessage');
-          toast.classList.add('show');
-          setTimeout(() => {
-            toast.classList.remove('show');
-          }, 3000);
-        })
-        .catch(error => {
-          // 万が一通信エラーが起きた場合のセーフティ
-          console.error("通信エラーが発生しました:", error);
-          alert("売上データの送信に失敗しました。ネット環境を確認してください。");
-        })
-        .finally(() => {
-          // ボタンの状態を元に戻す
-          confirmBtn.disabled = false;
-          confirmBtn.textContent = "会計を確定";
-        });
+      .then(() => {
+        // no-cors モードではレスポンスの中身を読めないため、
+        // 通信が成功した（catchに飛ばなかった）時点で成功扱いとします
+        alert("会計データが送信されました！");
+        closeModal();
+        resetForm();
+      })
+      .catch(error => {
+        console.error("送信エラー:", error);
+        alert("エラーが発生しました。通信環境を確認してください。");
+      })
+      .finally(() => {
+        btnSubmit.disabled = false;
+        btnSubmit.innerText = "注文を確定して送信";
+      });
     }
 
     // 3つのレジモード（NF / 北部祭 / 移動販売）を切り替える関数
