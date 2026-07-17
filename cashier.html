@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>学祭レジシステム - レジ</title>
+  <link rel="stylesheet" href="stylesheet.css">
+  <link rel="stylesheet" href="style_cashier.css">
+</head>
+
+<body>
+
+  <div class="header">
+    <div class="header-left">
+      <h1>レジ画面</h1>
+      <div class="toggle-container">
+        <button type="button" class="toggle-btn active" id="btn-reg-nf" onclick="switchRegister('NF')">NFレジ</button>
+        <button type="button" class="toggle-btn" id="btn-reg-hokubu" onclick="switchRegister('北部祭')">北部祭レジ</button>
+        <button type="button" class="toggle-btn" id="btn-reg-idou" onclick="switchRegister('移動販売')">移動販売</button>
+      </div>
+    </div>
+    <a href="index.html" class="btn-back">← トップに戻る</a>
+  </div>
+
+  <div class="grid-container" id="gridContainer"></div>
+
+  <div class="footer-area">
+    <button class="btn-reset" onclick="resetApp()">リセット</button>
+    <button class="btn-gacha-loop" onclick="triggerGachaLoop()">マスガチャループ</button>
+
+    <div class="other-item-container">
+      <span class="other-label">その他:</span>
+      <input type="text" class="input-other-name" id="inputOtherName" placeholder="商品名を入力" maxlength="20">
+      <input type="number" class="input-other-price" id="inputOtherPrice" oninput="validateOtherPrice()"
+        placeholder="0">
+      <span class="other-unit">円</span>
+    </div>
+
+    <div class="footer-bar">
+      <div class="footer-right">
+        <div class="total-price-container">
+          <span class="total-price-label">合計金額</span>
+          <span class="total-price-amount">0円</span>
+        </div>
+        <button class="btn-checkout" onclick="openModal()">会計</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="checkoutModal">
+    <div class="modal-window">
+      <p class="modal-title">💰 会計確認</p>
+
+      <div class="modal-calc-row" style="color: #4a5568; font-size: 16px; margin-bottom: -5px;">
+        <span>担当レジ</span>
+        <span id="modalRegisterType" style="color: #333333; font-weight: bold;">--レジ</span>
+      </div>
+
+      <div class="modal-receipt-area" id="modalReceiptList"></div>
+
+      <div class="modal-calc-row">
+        <span>合計金額</span>
+        <span id="modalTotalAmount">0円</span>
+      </div>
+
+      <div class="modal-calc-row">
+        <span>お預かり</span>
+        <div>
+          <input type="number" class="input-money" id="inputDeposit" oninput="calcChange()"
+            onkeydown="blockInvalidKeys(event)" placeholder="0"> 円
+        </div>
+      </div>
+
+      <div class="modal-calc-row" style="border-top: 2px dashed #e2e8f0; padding-top: 15px;">
+        <span>お釣り</span>
+        <span class="change-amount" id="modalChangeAmount">0円</span>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-modal-cancel" onclick="closeModal()">戻る</button>
+        <button class="btn-modal-confirm" id="btnConfirmPayment" onclick="submitPayment()">会計を確定</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastMessage" class="toast-message">お会計が完了しました！</div>
+
+  <script>
+    // 商品マスターデータ
+    const ITEM_MASTER = {
+      "item_01": { name: "部誌", price: 1300 },
+      "item_02": { name: "バックナンバー", price: 500 },
+      "item_03": { name: "-", price: 0 },
+      "item_04": { name: "-", price: 0 },
+      "item_05": { name: "数学模試（理系①）", price: 600 },
+      "item_06": { name: "数学模試（理系②）", price: 600 },
+      "item_07": { name: "数学模試（文系①）", price: 600 },
+      "item_08": { name: "数学模試（文系②）", price: 600 },
+      "item_09": { name: "物理模試", price: 600 },
+      "item_10": { name: "化学模試", price: 600 },
+      "item_11": { name: "生物模試", price: 600 },
+      "item_12": { name: "地学模試", price: 600 },
+      "item_13": { name: "マスガチャ", price: 100 },
+      "item_14": { name: "マスガチャ割引", price: -100 },
+      "item_15": { name: "マスガチャ割引", price: -200 },
+      "item_16": { name: "マスガチャ割引", price: -300 }
+    };
+
+    let currentTotal = 0;
+
+    // アプリ初期化：商品マスターから16個の箱を自動生成してHTMLに流し込む
+    function initApp() {
+      const container = document.getElementById('gridContainer');
+      container.innerHTML = ""; // 初期化
+
+      // マスターデータのキー（"item_01", "item_02" ...）をループ処理
+      Object.keys(ITEM_MASTER).forEach(itemId => {
+        const itemData = ITEM_MASTER[itemId];
+
+        // 商品箱（Item Card）のHTML構造を自動作成
+        const card = document.createElement('div');
+        card.className = 'item-card';
+        card.setAttribute('data-item-id', itemId);
+        card.innerHTML = `
+          <div class="item-click-area" onclick="plusFromCard(this)">
+            <p class="item-name">${itemData.name}</p>
+            <div class="item-price">${itemData.price.toLocaleString()}円</div>
+          </div>
+          <div class="quantity-control">
+            <button class="btn-qty" onclick="minus(this)">-</button>
+            <span class="qty-count">0</span>
+            <button class="btn-qty" onclick="plus(this)">+</button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    window.onload = initApp;
+
+    // 全ての購入個数を0にリセットする関数
+    function resetApp() {
+      const counts = document.querySelectorAll('.qty-count');
+      counts.forEach(span => {
+        span.textContent = '0';
+        updateCountColor(span);
+      });
+      //その他（自由入力）の枠もきれいにリセットする
+      document.getElementById('inputOtherName').value = "";
+      document.getElementById('inputOtherPrice').value = "";
+
+      updateTotal();
+    }
+
+    // マスガチャと100円割引を同時に+1する関数
+    function triggerGachaLoop() {
+      const cards = document.querySelectorAll('.item-card');
+
+      cards.forEach(card => {
+        const itemId = card.getAttribute('data-item-id');
+
+        // マスガチャ(item_13) または マスガチャ割引-100円(item_14) のとき
+        if (itemId === "item_13" || itemId === "item_14") {
+          const countSpan = card.querySelector('.qty-count');
+          let count = parseInt(countSpan.textContent);
+
+          // 上限20個未満であれば+1する（既存のバリデーションと連動）
+          if (count < 20) {
+            count++;
+            countSpan.textContent = count;
+            updateCountColor(countSpan);
+          }
+        }
+      });
+
+      // 個数を変えたので、右下の合計金額をリアルタイム再計算
+      updateTotal();
+    }
+
+    // 箱の上部エリアをクリックした時もプラスにする関数
+    function plusFromCard(clickArea) {
+      const quantityControl = clickArea.nextElementSibling;
+      const countSpan = quantityControl.querySelector('.qty-count');
+      let count = parseInt(countSpan.textContent);
+
+      if (count < 20) {
+        count++;
+        countSpan.textContent = count;
+        updateCountColor(countSpan);
+        updateTotal();
+      }
+    }
+
+    // ＋ボタンが押されたとき
+    function plus(button) {
+      const countSpan = button.previousElementSibling;
+      let count = parseInt(countSpan.textContent);
+
+      if (count < 20) {
+        count++;
+        countSpan.textContent = count;
+        updateCountColor(countSpan);
+        updateTotal();
+      }
+    }
+
+    // ーボタンが押されたとき
+    function minus(button) {
+      const countSpan = button.nextElementSibling;
+      let count = parseInt(countSpan.textContent);
+
+      if (count > 0) {
+        count--;
+        countSpan.textContent = count;
+        updateCountColor(countSpan);
+        updateTotal();
+      }
+    }
+
+    // 個数に応じて文字色を赤/黒に切り替える関数
+    function updateCountColor(span) {
+      const count = parseInt(span.textContent);
+      if (count > 0) {
+        span.classList.add('has-count');
+      } else {
+        span.classList.remove('has-count');
+      }
+    }
+
+    // 「その他」の金額入力を-10000〜10000に制限し、合計を再計算する関数
+    function validateOtherPrice() {
+      const priceInput = document.getElementById('inputOtherPrice');
+      let valStr = priceInput.value;
+
+      if (valStr === "") {
+        updateTotal();
+        return;
+      }
+
+      let price = parseInt(valStr);
+
+      // -10000以上 10000以下の整数制限にアップデート
+      if (price > 10000) {
+        price = 10000;
+        priceInput.value = 10000;
+      } else if (price < -10000 || isNaN(price)) {
+        price = -10000;
+        priceInput.value = -10000;
+      }
+
+      // 金額が変わったので合計金額の再計算を呼び出す
+      updateTotal();
+    }
+
+    // 合計金額の計算（リアルタイム割引最適化ロジック適用版）
+    function updateTotal() {
+      const cards = document.querySelectorAll('.item-card');
+
+      let a = 0; // マスガチャ以外の通常商品数
+      let b = 0; // マスガチャの購入数
+      let c = 0; // 100円割引の枚数
+      let d = 0; // 200円割引の枚数
+      let e = 0; // 300円割引の枚数
+
+      let normalProductsSubtotal = 0; // 割引前の通常商品の合計金額
+
+      // 1. 各バケツの購入数・枚数と、通常商品の小計を集計
+      cards.forEach(card => {
+        const itemId = card.getAttribute('data-item-id');
+        const count = parseInt(card.querySelector('.qty-count').textContent);
+        const itemData = ITEM_MASTER[itemId];
+
+        if (count > 0) {
+          if (itemId === "item_13") {
+            b += count;
+            normalProductsSubtotal += itemData.price * count;
+          } else if (itemId === "item_14") {
+            c += count;
+          } else if (itemId === "item_15") {
+            d += count;
+          } else if (itemId === "item_16") {
+            e += count;
+          } else if (itemData.price > 0) {
+            a += count;
+            normalProductsSubtotal += itemData.price * count;
+          }
+        }
+      });
+
+      const totalAmountSpan = document.querySelector('.total-price-amount');
+
+      // 2. エラーチェック：割引の総数が、通常商品の総数（a + b）を超えている場合
+      if ((c + d + e) > (a + b)) {
+        totalAmountSpan.textContent = 'エラー';
+        currentTotal = 0;
+        return; // 処理をここで中断
+      }
+
+      // 3. 【割引最適化ロジック】a < (d + e) の時、計算用の変数（c, d, e）だけを調整する
+      if (a < (d + e)) {
+        if (e > a) {
+          c = c + d + e - a;
+          d = 0;
+          e = a;
+        } else {
+          c = c + d + e - a;
+          d = a - e;
+          // eはそのまま
+        }
+      }
+
+      // 4. 調整された枚数から割引総額を算出し、最終合計金額を出す
+      const finalDiscountTotal = (c * -100) + (d * -200) + (e * -300);
+      let total = normalProductsSubtotal + finalDiscountTotal;
+
+      //「その他」の金額があれば、それも合計金額に合算する
+      const otherPriceInput = document.getElementById('inputOtherPrice').value;
+      if (otherPriceInput !== "") {
+        total += parseInt(otherPriceInput);
+      }
+
+      if (total < 0) {
+        totalAmountSpan.textContent = 'エラー';
+        currentTotal = 0;
+        return; // 処理をここで中断
+      }
+
+      // 5. 画面の「合計金額」に反映
+      totalAmountSpan.textContent = total.toLocaleString() + '円';
+      currentTotal = total;
+    }
+
+    // 会計確認ポップアップを開く
+    function openModal() {
+      const cards = document.querySelectorAll('.item-card');
+
+      let totalQuantityAll = 0;      // 全商品の合計
+      let totalQuantityDiscount = 0; // マスガチャ割引の合計
+      let totalQuantityNormal = 0;   // 通常商品の合計
+
+      let a = 0; // マスガチャ以外の通常商品
+      let b = 0; // マスガチャ
+      let c = 0; // 100円割引
+      let d = 0; // 200円割引
+      let e = 0; // 300円割引
+
+      cards.forEach(card => {
+        const itemId = card.getAttribute('data-item-id');
+        const count = parseInt(card.querySelector('.qty-count').textContent);
+
+        totalQuantityAll += count;
+
+        if (ITEM_MASTER[itemId].name.includes("マスガチャ割引")) {
+          totalQuantityDiscount += count;
+          if (itemId === "item_14") c += count;
+          if (itemId === "item_15") d += count;
+          if (itemId === "item_16") e += count;
+        } else {
+          totalQuantityNormal += count;
+          if (itemId === "item_13") {
+            b += count;
+          } else if (ITEM_MASTER[itemId].price > 0) {
+            a += count;
+          }
+        }
+      });
+
+      // 「その他」の入力状況を取得
+      const otherPriceInput = document.getElementById('inputOtherPrice').value;
+      const otherPrice = otherPriceInput !== "" ? parseInt(otherPriceInput) : 0;
+
+      // 💡 エラーチェック①：商品カードも「その他」も、何も選ばれて・入力されていない場合
+      if (totalQuantityAll === 0 && otherPrice <= 0) {
+        alert("商品が選択されていません。");
+        return;
+      }
+
+      // 💡 エラーチェック②：割引数が通常商品数を超えている場合
+      if (totalQuantityDiscount > totalQuantityNormal) {
+        alert("マスガチャの割引ルールに違反しています。");
+        return;
+      }
+
+      // 💡エラーチェック③：割引ルールを通過した後に、最終的な合計金額の「エラー」を判定する
+      const totalAmountSpan = document.querySelector('.total-price-amount').textContent;
+      if (totalAmountSpan === 'エラー') {
+        alert("合計金額がマイナスのため、お会計に進めません。");
+        return;
+      }
+
+      // 「会計」ボタンが押されたこの瞬間に、画面の枚数を最適化された数に上書き（反映）する！
+      if (a < (d + e)) {
+        if (e > a) {
+          c = c + d + e - a;
+          d = 0;
+          e = a;
+        } else {
+          c = c + d + e - a;
+          d = a - e;
+        }
+
+        // 実際にメイン画面の表示（.qty-count）を書き換える
+        cards.forEach(card => {
+          const itemId = card.getAttribute('data-item-id');
+          const countSpan = card.querySelector('.qty-count');
+
+          if (itemId === "item_14") {
+            countSpan.textContent = c;
+            updateCountColor(countSpan);
+          } else if (itemId === "item_15") {
+            countSpan.textContent = d;
+            updateCountColor(countSpan);
+          } else if (itemId === "item_16") {
+            countSpan.textContent = e;
+            updateCountColor(countSpan);
+          }
+        });
+      }
+
+      // ② 上書きされた後の綺麗な枚数をもとに、レシート内の一覧を生成
+      const receiptList = document.getElementById('modalReceiptList');
+      receiptList.innerHTML = "";
+
+      cards.forEach(card => {
+        const itemId = card.getAttribute('data-item-id');
+        const count = parseInt(card.querySelector('.qty-count').textContent);
+
+        if (count > 0) {
+          const itemData = ITEM_MASTER[itemId];
+          const row = document.createElement('div');
+          row.className = 'receipt-item';
+          row.innerHTML = `
+            <span>・${itemData.name} (${itemData.price.toLocaleString()}円)</span>
+            <span>× ${count}</span>
+          `;
+          receiptList.appendChild(row);
+        }
+      });
+
+      // 「その他」に金額が入力されている場合、レシートの末尾に行を追加
+      if (otherPrice !== 0) {
+        const label = otherPrice > 0 ? "その他" : "その他（値引き）";
+        const row = document.createElement('div');
+        row.className = 'receipt-item';
+        row.innerHTML = `
+          <span>・${label}</span>
+          <span>${otherPrice.toLocaleString()}円</span>
+        `;
+        receiptList.appendChild(row);
+      }
+
+      // ポップアップ情報の初期化と表示
+      document.getElementById('modalTotalAmount').textContent = currentTotal.toLocaleString() + '円';
+
+      const depositInput = document.getElementById('inputDeposit');
+      depositInput.value = "";
+      depositInput.placeholder = currentTotal;
+
+      calcChange();
+
+      // currentRegisterの中身（"NF" / "北部祭" / "移動販売"）に応じてテキストを切り替える
+      document.getElementById('modalRegisterType').textContent = currentRegister + "レジ";
+
+      const modal = document.getElementById('checkoutModal');
+      modal.style.display = 'flex';
+
+      // 表示後、0.05秒後に自動入力フォーカスを当てる
+      setTimeout(() => {
+        depositInput.focus();
+      }, 50);
+    }
+
+    // ポップアップを閉じる
+    function closeModal() {
+      document.getElementById('checkoutModal').style.display = 'none';
+    }
+
+    // マイナス記号「-」、小数点「.」「,」、および指数表現「e」「E」の入力をキーレベルで完全に拒否する
+    function blockInvalidKeys(event) {
+      if (
+        event.key === '-' ||
+        event.key === '.' ||
+        event.key === ',' ||
+        event.key === 'e' ||
+        event.key === 'E'
+      ) {
+        event.preventDefault(); // キー入力をなかったことにする
+      }
+    }
+
+    // お釣りのリアルタイム計算（入力制限：0〜15万円版）
+    function calcChange() {
+      let depositInput = document.getElementById('inputDeposit').value;
+      const changeSpan = document.getElementById('modalChangeAmount');
+      const confirmBtn = document.getElementById('btnConfirmPayment');
+
+      // お預かりが未入力（空欄）のとき
+      if (depositInput === "") {
+        changeSpan.textContent = "0円";
+        changeSpan.classList.remove('shortage');
+        confirmBtn.disabled = false;
+        return;
+      }
+
+      // 文字列から整数に変換
+      let deposit = parseInt(depositInput);
+
+      // 0以上15万以下の範囲に制限するバリデーション
+      if (deposit > 150000) {
+        deposit = 150000;
+        document.getElementById('inputDeposit').value = 150000;
+      } else if (deposit < 0 || isNaN(deposit)) {
+        deposit = 0;
+        document.getElementById('inputDeposit').value = 0;
+      }
+
+      // 引き算でお釣りを計算
+      const change = deposit - currentTotal;
+
+      if (change < 0) {
+        changeSpan.textContent = "不足: " + Math.abs(change).toLocaleString() + "円";
+        changeSpan.classList.add('shortage');
+        confirmBtn.disabled = true;
+      }
+      else {
+        changeSpan.textContent = change.toLocaleString() + "円";
+        changeSpan.classList.remove('shortage');
+        confirmBtn.disabled = false;
+      }
+    }
+
+    // 会計確定処理（GASへのデータ送信機能付き）
+    function submitPayment() {
+      // 1. ボタンの二重押し（連打）による二重不整合を防ぐため、確定ボタンを無効化
+      // 💡元の正しいID名（btnConfirmPayment）を維持
+      const confirmBtn = document.getElementById('btnConfirmPayment');
+      confirmBtn.disabled = true;
+      confirmBtn.textContent = "送信中...";
+
+      // 2. 送信するデータの組み立て
+      const cards = document.querySelectorAll('.item-card');
+      const itemCounts = {};
+
+      // すべての商品（item_01〜item_16）の個数を集計して連想配列に格納
+      cards.forEach(card => {
+        const itemId = card.getAttribute('data-item-id');
+        const count = parseInt(card.querySelector('.qty-count').textContent);
+        itemCounts[itemId] = count;
+      });
+
+      // 💡【新設】「その他」の入力状況（金額と商品名）を画面から確実に取得
+      const otherPriceInput = document.getElementById('inputOtherPrice').value;
+      const otherPrice = otherPriceInput !== "" ? parseInt(otherPriceInput) : 0;
+      const otherName = document.getElementById('inputOtherName').value.trim();
+
+      // GASに送るお弁当箱（データオブジェクト）を作成
+      const payload = {
+        register: currentRegister + "レジ",
+        amounts: itemCounts,
+        totalPrice: currentTotal,
+        // 💡【新設】「その他」のデータを追加してGASへ発射！
+        otherPrice: otherPrice,
+        otherName: otherName
+      };
+
+      // 3. 【非同期通信】GASに向けてデータを送信する
+      // 💡元の確実な通信方式（no-cors）とURLタグを維持
+      fetch("<?= getAppUrl(); ?>", {
+        method: "POST",
+        mode: "no-cors",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      })
+        .then(() => {
+          // 4. 送信が成功した後の処理（元の快適な画面リセット＆トースト通知を維持）
+          closeModal();
+          resetApp();
+
+          // トーストメッセージの表示
+          const toast = document.getElementById('toastMessage');
+          toast.classList.add('show');
+          setTimeout(() => {
+            toast.classList.remove('show');
+          }, 3000);
+        })
+        .catch(error => {
+          // 万が一通信エラーが起きた場合のセーフティ
+          console.error("通信エラーが発生しました:", error);
+          alert("売上データの送信に失敗しました。ネット環境を確認してください。");
+        })
+        .finally(() => {
+          // ボタンの状態を元に戻す
+          confirmBtn.disabled = false;
+          confirmBtn.textContent = "会計を確定";
+        });
+    }
+
+    // 3つのレジモード（NF / 北部祭 / 移動販売）を切り替える関数
+    let currentRegister = "NF"; // 初期値はNFレジ
+
+    function switchRegister(mode) {
+      if (currentRegister === mode) return;
+
+      currentRegister = mode;
+
+      // 3つのボタンをすべて取得
+      const btnNf = document.getElementById('btn-reg-nf');
+      const btnHokubu = document.getElementById('btn-reg-hokubu');
+      const btnIdou = document.getElementById('btn-reg-idou');
+
+      // 一旦すべてのボタンから active クラスを剥がす
+      btnNf.classList.remove('active');
+      btnHokubu.classList.remove('active');
+      btnIdou.classList.remove('active');
+
+      // 選択されたモードのボタンにだけ active をつける
+      if (mode === 'NF') {
+        btnNf.classList.add('active');
+      } else if (mode === '北部祭') {
+        btnHokubu.classList.add('active');
+      } else if (mode === '移動販売') {
+        btnIdou.classList.add('active');
+      }
+
+      console.log("現在のレジモード:", currentRegister);
+    }
+  </script>
+
+</body>
+
+</html>

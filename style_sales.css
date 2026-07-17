@@ -1,0 +1,236 @@
+/* === sales.html 固有のリセット（共通設定の上書き） === */
+body {
+height: auto !important; /* 縦画面固定を解除し、スクロール可能に */
+display: block !important; /* フレックス配置を解除 */
+overflow-y: auto !important; /* 縦スクロールバーを正常化 */
+}
+
+/* === sales.html 固有の拡張スタイリング（PC最適化） === */
+.sales-container {
+max-width: 1400px;
+margin: 0 auto;
+padding: 8px 20px 0 20px; /* 💡 デフォルト（画面が狭いとき）は上に詰める */
+font-family: 'Helvetica Neue', Arial, sans-serif;
+box-sizing: border-box;
+transition: padding 0.2s ease; /* 余白の変化を滑らかに */
+}
+
+/* 画面の縦幅（高さ）が 900px 以上のゆとりがある場合のみ、余白を広げてバランスを取る */
+@media (min-height: 900px) {
+.sales-container {
+padding-top: 32px; /* ヘッダーの上のゆとりを復活 */
+}
+.control-panel {
+margin-bottom: 36px; /* コントロールパネル下の隙間を少し広げて分散 */
+}
+.matrix-panel {
+margin-bottom: 40px; /* テーブル下の隙間も少し広げて分散 */
+}
+}
+
+/* 1. 上部コントロールエリア（画面の上1割） */
+.control-panel {
+display: flex;
+justify-content: space-between;
+align-items: center;
+background-color: #f7fafc;
+padding: 15px 20px;
+border-radius: 8px;
+box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+margin-bottom: 20px;
+}
+/* 4連セグメントコントロール */
+.segment-container {
+display: flex;
+background-color: #edf2f7;
+padding: 4px;
+border-radius: 8px;
+}
+.segment-btn {
+border: none;
+background: none;
+padding: 10px 24px;
+font-size: 15px;
+font-weight: bold;
+color: #4a5568;
+cursor: pointer;
+border-radius: 6px;
+transition: all 0.2s;
+}
+.segment-btn.active {
+background-color: white;
+color: #3182ce;
+box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* 更新ボタン＆最終更新時刻 */
+.sync-container {
+display: flex;
+align-items: center;
+gap: 12px;
+}
+.last-update-time {
+font-size: 14px;
+color: #718096;
+font-weight: 500;
+}
+.btn-sync {
+background-color: #3182ce;
+color: white;
+border: none;
+padding: 10px 18px;
+font-size: 15px;
+font-weight: bold;
+border-radius: 6px;
+cursor: pointer;
+display: flex;
+align-items: center;
+gap: 6px;
+transition: background 0.2s;
+}
+.btn-sync:hover {
+background-color: #2b6cb0;
+}
+
+/* 2. メインエリア（画面の中5割） */
+.matrix-panel {
+background-color: white;
+border-radius: 8px;
+box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+padding: 20px;
+margin-bottom: 25px;
+position: relative;
+}
+.matrix-header {
+display: flex;
+justify-content: flex-start;
+margin-bottom: 12px;
+}
+/* 2連モード切り替えボタン */
+.mode-container {
+display: flex;
+background-color: #edf2f7;
+padding: 3px;
+border-radius: 6px;
+}
+.mode-btn {
+border: none;
+background: none;
+padding: 6px 16px;
+font-size: 14px;
+font-weight: bold;
+color: #4a5568;
+cursor: pointer;
+border-radius: 4px;
+transition: all 0.2s;
+}
+.mode-btn.active {
+background-color: white;
+color: #2d3748;
+box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* テーブルのPC最適化＆横スクロール対応 */
+.table-wrapper {
+width: 100%;
+overflow-x: auto;
+border: 1px solid #e2e8f0;
+border-radius: 6px;
+}
+.sales-matrix-table {
+width: 100%;
+border-collapse: collapse;
+text-align: center;
+font-size: 14px;
+white-space: nowrap;
+}
+.sales-matrix-table th,
+.sales-matrix-table td {
+padding: 12px 14px; /* 💡 【現状維持】セルの上下・左右パディングは元の比率のまま */
+border-bottom: 1px solid #e2e8f0;
+border-right: 1px solid #e2e8f0;
+}
+.sales-matrix-table th {
+background-color: #f7fafc;
+color: #4a5568;
+font-weight: bold;
+position: sticky;
+top: 0;
+}
+.sales-matrix-table th:first-child,
+.sales-matrix-table td:first-child {
+font-weight: bold;
+background-color: #f7fafc;
+color: #2d3748;
+position: sticky;
+left: 0;
+z-index: 1;
+}
+
+/* 行・列ハイライト（ホバーエフェクト） */
+.sales-matrix-table tbody tr:hover {
+background-color: #edf2f7 !important;
+}
+
+/* 合計行の特別装飾 */
+.row-total-summary {
+background-color: #ebf8ff;
+font-weight: bold;
+font-size: 15px;
+color: #2b6cb0;
+}
+.row-total-summary td {
+border-top: 2px solid #bee3f8;
+}
+
+/* 3. フッターエリア（画面の下4割） */
+.summary-board-container {
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 24px;
+margin-bottom: 0px; /* 💡 【修正】サマリーの下の余計な余白を 20px → 0px に削りました */
+}
+.summary-card {
+background-color: white;
+border-radius: 10px;
+box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+padding: 24px;
+border-top: 6px solid #4299e1;
+}
+.summary-card.total-scope {
+border-top-color: #48bb78;
+}
+.card-title {
+font-size: 18px;
+font-weight: bold;
+color: #4a5568;
+margin-bottom: 20px;
+display: flex;
+align-items: center;
+gap: 6px;
+}
+.card-row {
+display: flex;
+justify-content: space-between;
+align-items: center;
+margin-bottom: 16px;
+}
+.card-row:last-child {
+margin-bottom: 0;
+}
+.card-label {
+font-size: 16px;
+color: #718096;
+font-weight: 500;
+}
+.card-value {
+font-size: 36px;
+font-weight: 900;
+color: #2d3748;
+}
+.card-value span {
+font-size: 18px;
+font-weight: bold;
+color: #718096;
+margin-left: 4px;
+}

@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="robots" content="noindex, nofollow">
+  <title>学祭レジシステム - 売上確認画面</title>
+  <link rel="stylesheet" href="stylesheet.css">
+  <link rel="stylesheet" href="style_sales.css">
+</head>
+
+<body>
+
+  <div class="sales-container">
+
+    <header class="header">
+      <h1>📈 売上確認ダッシュボード</h1>
+      <a href="index.html" class="btn-back">← トップに戻る</a>
+    </header>
+
+    <section class="control-panel">
+      <div class="segment-container">
+        <button class="segment-btn active" onclick="switchRegister('all', this)">すべてのレジ</button>
+        <button class="segment-btn" onclick="switchRegister('NF', this)">NFレジ</button>
+        <button class="segment-btn" onclick="switchRegister('北部祭', this)">北部祭レジ</button>
+        <button class="segment-btn" onclick="switchRegister('移動販売', this)">移動販売</button>
+      </div>
+
+      <div class="sync-container">
+        <span class="last-update-time" id="txtLastUpdate">最終更新: --:--:--</span>
+        <button class="btn-sync" onclick="fetchSalesData()">
+          <span>🔄</span> データを最新に更新
+        </button>
+      </div>
+    </section>
+
+    <section class="matrix-panel">
+      <div class="matrix-header">
+        <div class="mode-container">
+          <button class="mode-btn active" id="btnModeQty" onclick="switchDisplayMode('qty')">個数モード</button>
+          <button class="mode-btn" id="btnModeAmount" onclick="switchDisplayMode('amount')">金額モード</button>
+        </div>
+      </div>
+
+      <div class="table-wrapper">
+        <table class="sales-matrix-table">
+          <thead id="matrixTableHead">
+          </thead>
+          <tbody id="matrixTableBody">
+            <tr>
+              <td colspan="19" style="padding: 40px; color: #a0aec0;">データを読み込んでいます...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="summary-board-container">
+
+      <div class="summary-card">
+        <div class="card-title">📅 今日のサマリー <span style="font-size: 14px; font-weight: normal; color: #718096;"
+            id="txtTodayLabel">(
+            <?= Utilities.formatDate(new Date(), "JST", "MM/dd") ?>)
+          </span></div>
+        <div class="card-row">
+          <span class="card-label">会計回数</span>
+          <div class="card-value" id="lblTodayCount">0<span>回</span></div>
+        </div>
+        <div class="card-row">
+          <span class="card-label">今日の売上金額</span>
+          <div class="card-value" style="color: #3182ce;" id="lblTodayAmount">0<span>円</span></div>
+        </div>
+      </div>
+
+      <div class="summary-card total-scope">
+        <div class="card-title">🏆 期間中の総サマリー <span
+            style="font-size: 14px; font-weight: normal; color: #718096;">(学祭4日間通算)</span></div>
+        <div class="card-row">
+          <span class="card-label">総会計回数</span>
+          <div class="card-value" id="lblTotalCount">0<span>回</span></div>
+        </div>
+        <div class="card-row">
+          <span class="card-label">総売上金額</span>
+          <div class="card-value" style="color: #38a169;" id="lblTotalAmount">0<span>円</span></div>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <script>
+    // === 1. 状態管理と定数の定義 ===
+    let currentRegisterMode = 'all'; // 'all', 'NF', '北部祭', '移動販売'
+    let currentViewMode = 'qty';      // 'qty', 'amount'
+    let allSalesData = [];           // GASから取得した売上ログの全行データを格納する配列
+
+    // 💡 商品マスター（名前と単価を一元化して管理します）
+    // "-" と書かれた商品は非表示になります
+    const PRODUCT_MASTER = [
+      { name: "部誌", price: 1300 },
+      { name: "ﾊﾞｯｸﾅﾝﾊﾞｰ", price: 500 },
+      { name: "-", price: 0 }, // 非表示対象
+      { name: "-", price: 0 }, // 非表示対象
+      { name: "数理①", price: 600 },
+      { name: "数理②", price: 600 },
+      { name: "数文①", price: 600 },
+      { name: "数文②", price: 600 },
+      { name: "物理", price: 600 },
+      { name: "化学", price: 600 },
+      { name: "生物", price: 600 },
+      { name: "地学", price: 600 },
+      { name: "ﾏｽｶﾞﾁｬ", price: 100 },
+      { name: "-100", price: -100 },
+      { name: "-200", price: -200 },
+      { name: "-300", price: -300 }
+    ];
+
+    // 集計対象とする2026年の学祭4日間の日付リスト
+    const TARGET_DATES = ["2026/11/20", "2026/11/21", "2026/11/22", "2026/11/23"];
+
+    // === 2. 画面起動時の処理 ===
+    window.onload = function () {
+      fetchSalesData();
+    };
+
+    // === 3. 本番通信ロジック：GASから最新データを取得 ===
+    function fetchSalesData() {
+      console.log("スプレッドシートから最新データを引っ張ります...");
+
+      const tbody = document.getElementById('matrixTableBody');
+      if (tbody) {
+        tbody.innerHTML = `<tr><td colspan="18" style="padding: 40px; color: #a0aec0;">🔄 サーバーから最新データを通信中...</td></tr>`;
+      }
+
+      google.script.run
+        .withSuccessHandler(function (data) {
+          allSalesData = data || [];
+          renderMatrixTable();
+
+          const now = new Date();
+          document.getElementById('txtLastUpdate').innerText = `最終更新: ${now.toLocaleTimeString('ja-JP')}`;
+        })
+        .withFailureHandler(function (error) {
+          console.error("データ取得エラー:", error);
+          if (tbody) {
+            tbody.innerHTML = `<tr><td colspan="18" style="padding: 40px; color: #e53e3e; font-weight: bold;">❌ データの取得に失敗しました。再試行してください。</td></tr>`;
+          }
+        })
+        .getSalesLogData();
+    }
+
+    // === 4. UI操作イベント（切り替えボタン） ===
+    function switchRegister(register, element) {
+      document.querySelectorAll('.segment-btn').forEach(btn => btn.classList.remove('active'));
+      element.classList.add('active');
+      currentRegisterMode = register;
+      renderMatrixTable();
+    }
+
+    function switchDisplayMode(mode) {
+      document.getElementById('btnModeQty').classList.remove('active');
+      document.getElementById('btnModeAmount').classList.remove('active');
+
+      if (mode === 'qty') {
+        document.getElementById('btnModeQty').classList.add('active');
+      } else {
+        document.getElementById('btnModeAmount').classList.add('active');
+      }
+      currentViewMode = mode;
+      renderMatrixTable();
+    }
+
+    // === 5. 🔥 コアロジック：データの集計と表への描画 ===
+    function renderMatrixTable() {
+      const thead = document.getElementById('matrixTableHead');
+      const tbody = document.getElementById('matrixTableBody');
+      if (!thead || !tbody) return;
+
+      tbody.innerHTML = "";
+      thead.innerHTML = "";
+
+      // 💡 A. 有効な（「-」以外の商品）インデックスを抽出する
+      const activeProductIndexes = [];
+      PRODUCT_MASTER.forEach((prod, index) => {
+        if (prod.name !== "-") {
+          activeProductIndexes.push(index);
+        }
+      });
+
+      // 💡 B. ヘッダー（thead）を動的に組み立て
+      let thHtml = `<tr><th>日付</th>`;
+      activeProductIndexes.forEach(index => {
+        thHtml += `<th>${PRODUCT_MASTER[index].name}</th>`;
+      });
+      thHtml += `<th>その他</th>`;
+      thHtml += `<th style="background-color: #ebf8ff; color: #2b6cb0;">合計</th></tr>`;
+      thead.innerHTML = thHtml;
+
+      // 💡 C. データ集計用の変数を初期化
+      // activeProductIndexesの長さに合わせた集計用配列を用意する
+      const activeLength = activeProductIndexes.length;
+      let dailyData = Array.from({ length: 4 }, () => Array(activeLength + 1).fill(0)); // 商品群 + その他(最後尾)
+      let verticalTotal = Array(activeLength + 1).fill(0);
+      let verticalGrandTotalAmount = 0;
+
+      let todayCount = 0;
+      let todayAmount = 0;
+      let totalCount = 0;
+      let totalAmount = 0;
+
+      const nowObj = new Date();
+      const todayStr = nowObj.getFullYear() + "/" +
+        String(nowObj.getMonth() + 1).padStart(2, '0') + "/" +
+        String(nowObj.getDate()).padStart(2, '0');
+
+      // 💡 D. スプレッドシートデータの集計処理
+      allSalesData.forEach(row => {
+        if (currentRegisterMode !== 'all' && !row.register.includes(currentRegisterMode)) {
+          return;
+        }
+
+        const dateStr = row.timestamp;
+        const dateIndex = TARGET_DATES.indexOf(dateStr);
+
+        // 学祭の4日間に合致する場合のみ、各種集計を行う
+        if (dateIndex !== -1) {
+          // 有効な商品列だけループを回し、集計先の配列へとマッピングしながら加算
+          activeProductIndexes.forEach((masterIndex, i) => {
+            const qty = row.items[masterIndex] || 0;
+            const price = PRODUCT_MASTER[masterIndex].price;
+
+            if (currentViewMode === 'qty') {
+              dailyData[dateIndex][i] += qty;
+            } else {
+              dailyData[dateIndex][i] += (qty * price);
+            }
+          });
+
+          // 「その他」の集計（配列の最後尾に格納）
+          const otherColIndex = activeLength;
+          if (currentViewMode === 'qty') {
+            dailyData[dateIndex][otherColIndex] += (row.otherPrice > 0 ? 1 : 0);
+          } else {
+            dailyData[dateIndex][otherColIndex] += row.otherPrice;
+          }
+
+          // 💡 学祭期間中（4日間）のデータのみ、総サマリーに加算する
+          totalCount++;
+          totalAmount += row.totalPrice;
+        }
+
+        // 今日のサマリーの集計（todayStr が TARGET_DATES に含まれていなくても集計したい場合はこの位置でOK）
+        if (dateStr === todayStr) {
+          todayCount++;
+          todayAmount += row.totalPrice;
+        }
+      });
+
+      // 💡 E. 4日分のデータ行をHTMLとして出力
+      for (let d = 0; d < 4; d++) {
+        const displayDate = TARGET_DATES[d].substring(5);
+        let rowHtml = `<tr><td>${displayDate}</td>`;
+        let rowHorizontalTotalAmount = 0;
+
+        // 有効商品 + その他 の値を出力
+        for (let i = 0; i <= activeLength; i++) {
+          const val = dailyData[d][i];
+          rowHtml += `<td>${val.toLocaleString()}</td>`;
+          verticalTotal[i] += val;
+          rowHorizontalTotalAmount += val;
+        }
+
+        // 合計列（18列目）を出力
+        if (currentViewMode === 'amount') {
+          rowHtml += `<td style="font-weight: bold; background-color: #f7fafc; color: #2b6cb0;">${rowHorizontalTotalAmount.toLocaleString()}</td>`;
+          verticalGrandTotalAmount += rowHorizontalTotalAmount;
+        } else {
+          rowHtml += `<td style="color: #a0aec0; background-color: #f7fafc; text-align: center;">-</td>`;
+        }
+
+        rowHtml += `</tr>`;
+        tbody.insertAdjacentHTML('beforeend', rowHtml);
+      }
+
+      // 💡 F. 最下部の「合計行」を出力
+      let totalRowHtml = `<tr class="row-total-summary"><td>合計</td>`;
+      for (let i = 0; i <= activeLength; i++) {
+        totalRowHtml += `<td>${verticalTotal[i].toLocaleString()}</td>`;
+      }
+
+      if (currentViewMode === 'amount') {
+        totalRowHtml += `<td style="background-color: #bee3f8; color: #2b6cb0; font-size: 16px; font-weight: bold;">${verticalGrandTotalAmount.toLocaleString()}</td>`;
+      } else {
+        totalRowHtml += `<td style="color: #a0aec0; background-color: #bee3f8; text-align: center;">-</td>`;
+      }
+
+      totalRowHtml += `</tr>`;
+      tbody.insertAdjacentHTML('beforeend', totalRowHtml);
+
+      // サマリーボードの更新
+      document.getElementById('lblTodayCount').innerHTML = `${todayCount}<span>回</span>`;
+      document.getElementById('lblTodayAmount').innerHTML = `${todayAmount.toLocaleString()}<span>円</span>`;
+      document.getElementById('lblTotalCount').innerHTML = `${totalCount}<span>回</span>`;
+      document.getElementById('lblTotalAmount').innerHTML = `${totalAmount.toLocaleString()}<span>円</span>`;
+    }
+  </script>
+</body>
+
+</html>
