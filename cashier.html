@@ -535,7 +535,6 @@
     // 会計確定処理（GASへのデータ送信機能付き）
     function submitPayment() {
       // 1. ボタンの二重押し（連打）による二重不整合を防ぐため、確定ボタンを無効化
-      // 💡元の正しいID名（btnConfirmPayment）を維持
       const confirmBtn = document.getElementById('btnConfirmPayment');
       confirmBtn.disabled = true;
       confirmBtn.textContent = "送信中...";
@@ -551,7 +550,7 @@
         itemCounts[itemId] = count;
       });
 
-      // 💡【新設】「その他」の入力状況（金額と商品名）を画面から確実に取得
+      // 「その他」の入力状況（金額と商品名）を画面から確実に取得
       const otherPriceInput = document.getElementById('inputOtherPrice').value;
       const otherPrice = otherPriceInput !== "" ? parseInt(otherPriceInput) : 0;
       const otherName = document.getElementById('inputOtherName').value.trim();
@@ -561,38 +560,50 @@
         register: currentRegister + "レジ",
         amounts: itemCounts,
         totalPrice: currentTotal,
-        // 💡【新設】「その他」のデータを追加してGASへ発射！
         otherPrice: otherPrice,
         otherName: otherName
       };
 
       // 3. 【非同期通信】GASに向けてデータを送信する
-      // 💡元の確実な通信方式（no-cors）とURLタグを維持
-      fetch(GAS_WEB_APP_URL, {
+      // 💡 `<?= getAppUrl(); ?>` の代わりに、config.jsの `GAS_WEB_APP_URL` を使います
+      const targetUrl = typeof GAS_WEB_APP_URL !== 'undefined' ? GAS_WEB_APP_URL : "<?= getAppUrl(); ?>";
+
+      fetch(targetUrl, {
         method: "POST",
-        mode: "no-cors", // 💡重要: GASへの単純POST時のCORSエラーを回避
+        mode: "no-cors", // 💡 CORS制限をすり抜けるための no-cors
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type": "application/json"
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(payload)
       })
-      .then(() => {
-        // no-cors モードではレスポンスの中身を読めないため、
-        // 通信が成功した（catchに飛ばなかった）時点で成功扱いとします
-        alert("会計データが送信されました！");
+      .then(response => {
+        // 💡 `no-cors` の場合、正常に届いても response.ok は false (statusが0) になります。
+        // そのため、ここでは通信した事実そのものを成功として扱い、正常ルートの処理を進めます。
+        
+        // 4. 送信が成功した後の処理（元の快適な画面リセット＆トースト通知を維持）
         closeModal();
-        resetForm();
+        resetApp();
+
+        // トーストメッセージの表示
+        const toast = document.getElementById('toastMessage');
+        if (toast) {
+          toast.classList.add('show');
+          setTimeout(() => {
+            toast.classList.remove('show');
+          }, 3000);
+        }
       })
       .catch(error => {
-        console.error("送信エラー:", error);
-        alert("エラーが発生しました。通信環境を確認してください。");
+        // 本当にネットワークが遮断されているなどの致命的な通信エラーの場合のみ、ここに入ります
+        console.error("通信エラーが発生しました:", error);
+        alert("売上データの送信に失敗しました。ネット環境を確認してください。");
       })
       .finally(() => {
-        btnSubmit.disabled = false;
-        btnSubmit.innerText = "注文を確定して送信";
+        // ボタンの状態を元に戻す
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = "会計を確定";
       });
     }
-
     // 3つのレジモード（NF / 北部祭 / 移動販売）を切り替える関数
     let currentRegister = "NF"; // 初期値はNFレジ
 
