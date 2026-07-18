@@ -18,9 +18,7 @@
     <div class="header-left">
       <h1>レジ画面</h1>
       <div class="toggle-container">
-        <button type="button" class="toggle-btn active" id="btn-reg-nf" onclick="switchRegister('NF')">NFレジ</button>
-        <button type="button" class="toggle-btn" id="btn-reg-hokubu" onclick="switchRegister('北部祭')">北部祭レジ</button>
-        <button type="button" class="toggle-btn" id="btn-reg-idou" onclick="switchRegister('移動販売')">移動販売</button>
+        <div id="registerButtons"></div>
       </div>
     </div>
     <a href="index.html" class="btn-back">← トップに戻る</a>
@@ -110,6 +108,10 @@
       "item_16": { name: "マスガチャ割引", price: -300 }
     };
 
+    // 3つのレジモード（NFレジ / 北部祭レジ / 移動販売）を切り替える関数
+    let currentRegister = null; // 初期値はNFレジ
+    let registers = [];
+
     let currentTotal = 0;
 
     const REGISTER_MAP = {
@@ -154,8 +156,46 @@
     
     window.onload = async () => {
       await loadSlotMapping();
+      await loadRegisters();
       initApp();
     };
+
+    async function loadRegisters() {
+      const { data, error } = await mySupabase
+        .from('registers')
+        .select('register_id, register_name')
+        .order('register_id');
+
+      if (error) {
+        console.error(error);
+        return;
+      }
+    
+      registers = data;
+
+      // 初期レジ
+      currentRegisterId = registers[0].register_id;
+
+      createRegisterButtons();
+    }
+
+    function createRegisterButtons() {
+      const container =document.getElementById('registerButtons');
+      container.innerHTML = "";
+      registers.forEach(register => {
+        const button = document.createElement('button');
+        button.textContent = register.register_name;
+        button.onclick = () => {
+          switchRegister(register.register_id);
+        };
+        
+        if (register.register_id === currentRegisterId) {
+        button.classList.add('active');
+        }
+        
+        container.appendChild(button);
+      });
+    }
 
     // 全ての購入個数を0にリセットする関数
     function resetApp() {
@@ -478,7 +518,8 @@
       calcChange();
 
       // currentRegisterの中身（"NF" / "北部祭" / "移動販売"）に応じてテキストを切り替える
-      document.getElementById('modalRegisterType').textContent = currentRegister + "レジ";
+      const currentRegister = registers.find(r => r.register_id === currentRegisterId);
+      document.getElementById('modalRegisterType').textContent = currentRegister.register_name;
 
       const modal = document.getElementById('checkoutModal');
       modal.style.display = 'flex';
@@ -578,7 +619,7 @@
       .from('sales')
       .insert([
         {
-          register_id: REGISTER_MAP[currentRegister]
+          register_id: currentRegisterId
         }
       ])
       .select()
@@ -651,32 +692,18 @@ catch (err) {
   confirmBtn.textContent = "会計を確定";
 }
             }
-    // 3つのレジモード（NF / 北部祭 / 移動販売）を切り替える関数
-    let currentRegister = "NF"; // 初期値はNFレジ
 
-    function switchRegister(mode) {
-      if (currentRegister === mode) return;
 
-      currentRegister = mode;
-
-      // 3つのボタンをすべて取得
-      const btnNf = document.getElementById('btn-reg-nf');
-      const btnHokubu = document.getElementById('btn-reg-hokubu');
-      const btnIdou = document.getElementById('btn-reg-idou');
-
-      // 一旦すべてのボタンから active クラスを剥がす
-      btnNf.classList.remove('active');
-      btnHokubu.classList.remove('active');
-      btnIdou.classList.remove('active');
-
-      // 選択されたモードのボタンにだけ active をつける
-      if (mode === 'NF') {
-        btnNf.classList.add('active');
-      } else if (mode === '北部祭') {
-        btnHokubu.classList.add('active');
-      } else if (mode === '移動販売') {
-        btnIdou.classList.add('active');
-      }
+    function switchRegister(registerId) {
+      currentRegisterId = registerId;
+      const buttons = document.querySelectorAll('#registerButtons button');
+      buttons.forEach((button,index)=>{
+        if (registers[index].register_id === registerId) {
+          button.classList.add('active');
+        } else {
+          button.classList.remove('active');
+        }
+      });
     }
     
     let SLOT_TO_PRODUCT = {};
