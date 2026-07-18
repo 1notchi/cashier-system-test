@@ -653,6 +653,19 @@
   console.log("error =", error);
 
 }
+    async function testInsertSale() {
+  const { data, error } = await mySupabase
+    .from('sales')
+    .insert([
+      {
+        register_id: 1
+      }
+    ])
+    .select();
+
+  console.log("data =", data);
+  console.log("error =", error);
+}
   </script>
 
 </body>
