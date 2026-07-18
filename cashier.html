@@ -128,54 +128,75 @@
 
     // ──────────────────────────────────────────
     
-    // 商品マスターデータ
-    const ITEM_MASTER = {
-      "item_01": { name: "部誌", price: 1300 },
-      "item_02": { name: "バックナンバー", price: 500 },
-      "item_03": { name: "-", price: 0 },
-      "item_04": { name: "-", price: 0 },
-      "item_05": { name: "数学模試（理系①）", price: 600 },
-      "item_06": { name: "数学模試（理系②）", price: 600 },
-      "item_07": { name: "数学模試（文系①）", price: 600 },
-      "item_08": { name: "数学模試（文系②）", price: 600 },
-      "item_09": { name: "物理模試", price: 600 },
-      "item_10": { name: "化学模試", price: 600 },
-      "item_11": { name: "生物模試", price: 600 },
-      "item_12": { name: "地学模試", price: 600 },
-      "item_13": { name: "マスガチャ", price: 100 },
-      "item_14": { name: "マスガチャ割引", price: -100 },
-      "item_15": { name: "マスガチャ割引", price: -200 },
-      "item_16": { name: "マスガチャ割引", price: -300 }
-    };
+    // 💡 1. Supabaseクライアントを初期化
+    const SUPABASE_URL = "YOUR_SUPABASE_URL";
+    const SUPABASE_ANON_KEY = "YOUR_ANON_KEY";
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // 💡 SQLの構成に合わせて変数を準備
+    let itemMaster = Array(16).fill(null); // 1〜16のスロットを保持する配列
+    let registerMaster = [];              // レジ名とIDのペアを保持
+
+    let currentRegister = 'NF'; // 現在選択中のレジ名 ('NF', '北部祭', '移動販売')
+    let cart = {};              // カート中身 { product_id: 数量 }
+    let orderHistory = [];
 
     //let currentTotal = 0;
 
     // アプリ初期化：商品マスターから16個の箱を自動生成してHTMLに流し込む
-    function initApp() {
-      const container = document.getElementById('gridContainer');
-      container.innerHTML = ""; // 初期化
+    // 💡 2. 起動時にSupabaseから最新の商品マスターを取得するよう修正
+    async function initApp() {
+        try {
+            // 1. レジマスタの取得
+            const { data: regData, error: regError } = await supabase
+                .from('registers')
+                .select('*');
+            if (regError) throw regError;
+            registerMaster = regData;
 
-      // マスターデータのキー（"item_01", "item_02" ...）をループ処理
-      Object.keys(ITEM_MASTER).forEach(itemId => {
-        const itemData = ITEM_MASTER[itemId];
+            // 2. 表示スロットと商品のデータを結合して取得
+            // display_slots(slot_id, product_id) から products の情報を引っ張る
+            const { data: slotData, error: slotError } = await supabase
+                .from('display_slots')
+                .select(`
+                    slot_id,
+                    products (
+                        product_id,
+                        product_name,
+                        current_price
+                    )
+                `)
+                .order('slot_id', { ascending: true });
 
-        // 商品箱（Item Card）のHTML構造を自動作成
-        const card = document.createElement('div');
-        card.className = 'item-card';
-        card.setAttribute('data-item-id', itemId);
-        card.innerHTML = `
-          <div class="item-click-area" onclick="plusFromCard(this)">
-            <p class="item-name">${itemData.name}</p>
-            <div class="item-price">${itemData.price.toLocaleString()}円</div>
-          </div>
-          <div class="quantity-control">
-            <button class="btn-qty" onclick="minus(this)">-</button>
-            <span class="qty-count">0</span>
-            <button class="btn-qty" onclick="plus(this)">+</button>
-          </div>
-        `;
-        container.appendChild(card);
-      });
+            if (slotError) throw slotError;
+
+            // 3. 1〜16マスの配列(itemMaster)に再配置
+            // 元のhtmlが product.product_name や product.current_price を参照している場合は、
+            // カラム名をそれに合わせてマッピングします
+            itemMaster = Array(16).fill(null);
+            
+            slotData.forEach(slot => {
+                if (slot.products) {
+                    // フロントエンドの既存コードが「name」「price」というプロパティ名で
+                    // 動いている可能性が高いため、ここでエイリアス（別名）を作って格納します
+                    itemMaster[slot.slot_id - 1] = {
+                        id: slot.products.product_id,
+                        product_id: slot.products.product_id,
+                        name: slot.products.product_name,      // product_nameをnameへ
+                        price: slot.products.current_price,    // current_priceをpriceへ
+                    };
+                }
+            });
+
+            // 画面の初期描画を実行
+            renderGrid();
+            updateTotal();
+            switchRegister('NF'); 
+
+        } catch (err) {
+            console.error("初期データの取得に失敗しました:", err);
+            alert("データの読み込みに失敗しました。ページを再読み込みしてください。");
+        }
     }
 
     //window.onload = initApp;
@@ -571,77 +592,78 @@
       }
     }
 
-    // 会計確定処理（GASへのデータ送信機能付き）
-    function submitPayment() {
-      // 1. ボタンの二重押し（連打）による二重不整合を防ぐため、確定ボタンを無効化
-      const confirmBtn = document.getElementById('btnConfirmPayment');
-      confirmBtn.disabled = true;
-      confirmBtn.textContent = "送信中...";
-
-      // 2. 送信するデータの組み立て
-      const cards = document.querySelectorAll('.item-card');
-      const itemCounts = {};
-
-      // すべての商品（item_01〜item_16）の個数を集計して連想配列に格納
-      cards.forEach(card => {
-        const itemId = card.getAttribute('data-item-id');
-        const count = parseInt(card.querySelector('.qty-count').textContent);
-        itemCounts[itemId] = count;
-      });
-
-      // 「その他」の入力状況（金額と商品名）を画面から確実に取得
-      const otherPriceInput = document.getElementById('inputOtherPrice').value;
-      const otherPrice = otherPriceInput !== "" ? parseInt(otherPriceInput) : 0;
-      const otherName = document.getElementById('inputOtherName').value.trim();
-
-      // GASに送るお弁当箱（データオブジェクト）を作成
-      const payload = {
-        register: currentRegister + "レジ",
-        amounts: itemCounts,
-        totalPrice: currentTotal,
-        otherPrice: otherPrice,
-        otherName: otherName
-      };
-
-      // 3. 【非同期通信】GASに向けてデータを送信する
-      // 💡 `<?= getAppUrl(); ?>` の代わりに、config.jsの `GAS_WEB_APP_URL` を使います
-      const targetUrl = typeof GAS_WEB_APP_URL !== 'undefined' ? GAS_WEB_APP_URL : "<?= getAppUrl(); ?>";
-
-      fetch(targetUrl, {
-        method: "POST",
-        mode: "no-cors", // 💡 CORS制限をすり抜けるための no-cors
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(payload)
-      })
-      .then(response => {
-        // 💡 `no-cors` の場合、正常に届いても response.ok は false (statusが0) になります。
-        // そのため、ここでは通信した事実そのものを成功として扱い、正常ルートの処理を進めます。
-        
-        // 4. 送信が成功した後の処理（元の快適な画面リセット＆トースト通知を維持）
-        closeModal();
-        resetApp();
-
-        // トーストメッセージの表示
-        const toast = document.getElementById('toastMessage');
-        if (toast) {
-          toast.classList.add('show');
-          setTimeout(() => {
-            toast.classList.remove('show');
-          }, 3000);
+    async function submitPayment() {
+        const total = calculateTotal();
+        if (total === 0) {
+            alert('カートが空です');
+            return;
         }
-      })
-      .catch(error => {
-        // 本当にネットワークが遮断されているなどの致命的な通信エラーの場合のみ、ここに入ります
-        console.error("通信エラーが発生しました:", error);
-        alert("売上データの送信に失敗しました。ネット環境を確認してください。");
-      })
-      .finally(() => {
-        // ボタンの状態を元に戻す
-        confirmBtn.disabled = false;
-        confirmBtn.textContent = "会計を確定";
-      });
+
+        // 1. 現在のレジ名から、SQL側の「register_id」を見つける
+        const currentRegInfo = registerMaster.find(r => r.register_name === currentRegister);
+        if (!currentRegInfo) {
+            alert(`レジ「${currentRegister}」がマスターに登録されていません。`);
+            return;
+        }
+
+        try {
+            // 2. まずは会計親テーブル(sales)に挿入
+            const { data: saleResult, error: saleError } = await supabase
+                .from('sales')
+                .insert([{ register_id: currentRegInfo.register_id }])
+                .select()
+                .single();
+
+            if (saleError) throw saleError;
+            
+            const newSaleId = saleResult.sale_id;
+
+            // 3. 会計明細テーブル(sale_items)用のデータ配列を作成
+            const saleItemsData = Object.keys(cart).map(productId => {
+                const item = itemMaster.find(i => i && i.product_id == productId);
+                return {
+                    sale_id: newSaleId,
+                    product_id: Number(productId),
+                    quantity: cart[productId],
+                    unit_price: item.price,
+                    other_product_name: item.name
+                };
+            });
+
+            // 4. 明細を一括インサート
+            const { error: itemsError } = await supabase
+                .from('sale_items')
+                .insert(saleItemsData);
+
+            if (itemsError) throw itemsError;
+
+            // --- 5. 成功後のフロントエンド処理 ---
+            orderHistory.unshift({
+                id: newSaleId.toString(), // SQLで発行された本物のIDを履歴に使う
+                register: currentRegister,
+                total: total,
+                items: { ...cart }
+            });
+
+            updateHistory();
+            cart = {};
+            updateTotal();
+
+            // 💡 【変更点】alertを廃止し、既存のトーストメッセージ表示ロジックを実行
+            const toast = document.getElementById('toastMessage');
+            if (toast) {
+                // 必要であれば、トースト内のテキストを「会計完了(ID: xxx)」などに書き換えることも可能です
+                // toast.textContent = `会計が確定しました (売上ID: ${newSaleId})`; 
+                toast.classList.add('show');
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 3000);
+            }
+
+        } catch (err) {
+            console.error("売上データの保存に失敗しました:", err);
+            alert('データベースへの保存に失敗しました。通信環境やテーブル設定を確認してください。');
+        }
     }
     // 3つのレジモード（NF / 北部祭 / 移動販売）を切り替える関数
     //let currentRegister = "NF"; // 初期値はNFレジ
