@@ -90,6 +90,33 @@
   <div id="toastMessage" class="toast-message">お会計が完了しました！</div>
 
   <script>
+    // ==========================================
+// 💡 Supabaseの初期化設定（末尾のJavaScriptの最上部に追記）
+// ==========================================
+const supabaseClient = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
+
+// 【通信テスト用関数】
+async function checkSupabaseConnection() {
+  try {
+    const { data, error } = await supabaseClient.from('products').select('*').limit(1);
+    console.log("--- Supabase 接続テスト結果 ---");
+    if (error && error.message.includes("does not exist")) {
+      console.log("✅ 接続成功！Supabaseのサーバーと正しく通信できています。");
+    } else if (error) {
+      console.error("❌ 接続エラー:", error.message);
+    } else {
+      console.log("✅ 接続成功！", data);
+    }
+  } catch (err) {
+    console.error("❌ 通信自体に失敗しました:", err);
+  }
+}
+
+// 画面起動時に疎通を確認
+window.addEventListener('DOMContentLoaded', checkSupabaseConnection);
+
+// ──────────────────────────────────────────
+    
     // 商品マスターデータ
     const ITEM_MASTER = {
       "item_01": { name: "部誌", price: 1300 },
