@@ -90,10 +90,15 @@
   <div id="toastMessage" class="toast-message">お会計が完了しました！</div>
 
   <script>
+// ==========================================
+    // 💡 1. 状態管理変数の一元化（修正版）
     // ==========================================
-    // 💡 1. 状態管理変数の一元化（二重宣言の解消）
-    // ==========================================
-    const supabase = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
+    // 既存の supabase 読み込み関数（グローバルな supabase オブジェクト）を使用します
+    const supabase = window.supabase ? window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY) : null;
+
+    if (!supabase) {
+        console.error("Supabaseクライアントの初期化に失敗しました。ライブラリの読み込みを確認してください。");
+    }
 
     let itemMaster = Array(16).fill(null); // 1〜16のスロットを保持する配列
     let registerMaster = [];              // レジ名とIDのペアを保持
