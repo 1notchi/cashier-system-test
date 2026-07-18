@@ -540,7 +540,7 @@
     }
 
     // 会計確定処理（GASへのデータ送信機能付き）
-    function submitPayment() {
+    async function submitPayment() {
       // 1. ボタンの二重押し（連打）による二重不整合を防ぐため、確定ボタンを無効化
       const confirmBtn = document.getElementById('btnConfirmPayment');
       confirmBtn.disabled = true;
@@ -575,14 +575,40 @@
       // 💡 `<?= getAppUrl(); ?>` の代わりに、config.jsの `GAS_WEB_APP_URL` を使います
       const targetUrl = typeof GAS_WEB_APP_URL !== 'undefined' ? GAS_WEB_APP_URL : "<?= getAppUrl(); ?>";
 
-      fetch(targetUrl, {
+      /*fetch(targetUrl, {
         method: "POST",
         mode: "no-cors", // 💡 CORS制限をすり抜けるための no-cors
         headers: {
           "Content-Type": "application/json"
         },
         body: JSON.stringify(payload)
-      })
+      })*/
+      try {
+
+  const registerMap = {
+    "NF": 1,
+    "北部祭": 2,
+    "移動販売": 3
+  };
+
+  const { data: saleData, error: saleError } =
+    await mySupabase
+      .from('sales')
+      .insert([
+        {
+          register_id: registerMap[currentRegister]
+        }
+      ])
+      .select()
+      .single();
+
+  console.log("saleData =", saleData);
+  console.log("saleError =", saleError);
+
+}
+catch (err) {
+  console.error(err);
+}
         .then(response => {
           // 💡 `no-cors` の場合、正常に届いても response.ok は false (statusが0) になります。
           // そのため、ここでは通信した事実そのものを成功として扱い、正常ルートの処理を進めます。
