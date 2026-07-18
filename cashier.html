@@ -90,38 +90,6 @@
   <div id="toastMessage" class="toast-message">お会計が完了しました！</div>
 
   <script>
-// ==========================================
-    // ステップ1: Supabaseの初期化と接続テスト（修正版）
-    // ==========================================
-    // グローバルに読み込まれている supabaseJS のオブジェクトから client を生成します
-    const supabase = (typeof supabaseUrl !== 'undefined' && typeof supabaseKey !== 'undefined')
-      ? supabase.createClient(supabaseUrl, supabaseKey)
-      : null;
-
-    // 接続テスト用関数（ページ読み込み時に自動実行）
-    async function testSupabaseConnection() {
-      if (!supabase) {
-        console.error("Supabase初期化エラー: config.js の変数が読み込めません。");
-        return;
-      }
-      
-      try {
-        // products テーブルから最初の1件だけ試験的に取得してみる
-        const { data, error } = await supabase
-          .from('products')
-          .select('*')
-          .limit(1);
-
-        if (error) {
-          console.error("Supabase接続テスト失敗 (エラー応答):", error.message);
-        } else {
-          console.log("🎉 Supabase接続テスト成功！取得データサンプル:", data);
-        }
-      } catch (err) {
-        console.error("Supabase接続テスト中に予期せぬエラーが発生しました:", err);
-      }
-    }
-    
     // 商品マスターデータ
     const ITEM_MASTER = {
       "item_01": { name: "部誌", price: 1300 },
@@ -172,10 +140,7 @@
       });
     }
 
-    window.onload = function() {
-      initApp();
-      testSupabaseConnection(); // 接続テストを実行
-    };
+    window.onload = initApp;
 
     // 全ての購入個数を0にリセットする関数
     function resetApp() {
