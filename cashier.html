@@ -18,7 +18,7 @@
     <div class="header-left">
       <h1>レジ画面</h1>
       <div class="toggle-container">
-        <div id="registerButtons" class="toddle-btn"></div>
+        <div id="registerButtons"></div>
       </div>
     </div>
     <a href="index.html" class="btn-back">← トップに戻る</a>
@@ -109,16 +109,9 @@
     };
 
     // 3つのレジモード（NFレジ / 北部祭レジ / 移動販売）を切り替える関数
-    let currentRegister = null; // 初期値はNFレジ
     let registers = [];
 
     let currentTotal = 0;
-
-    const REGISTER_MAP = {
-      NF: 1,
-      北部祭: 2,
-      移動販売: 3
-    };
 
     // アプリ初期化：商品マスターから16個の箱を自動生成してHTMLに流し込む
     function initApp() {
@@ -180,22 +173,40 @@
     }
 
     function createRegisterButtons() {
-      const container =document.getElementById('registerButtons');
-      container.innerHTML = "";
-      registers.forEach(register => {
-        const button = document.createElement('button');
-        button.textContent = register.register_name;
-        button.onclick = () => {
-          switchRegister(register.register_id);
-        };
-        
-        if (register.register_id === currentRegisterId) {
-        button.classList.add('active');
-        }
-        
-        container.appendChild(button);
-      });
+  const container = document.getElementById('registerButtons');
+  container.innerHTML = "";
+
+  registers.forEach(register => {
+
+    const button = document.createElement('button');
+
+    button.type = "button";
+    button.className = "toggle-btn";
+    button.dataset.registerId = register.register_id;
+    button.textContent = register.register_name;
+
+    button.onclick = () => {
+      switchRegister(register.register_id);
+    };
+
+    if (register.register_id === currentRegisterId) {
+      button.classList.add('active');
     }
+
+    container.appendChild(button);
+  });
+}
+
+function switchRegister(registerId) {
+  currentRegisterId = registerId;
+  document.querySelectorAll('#registerButtons button').forEach(button => {
+    if (Number(button.dataset.registerId) === registerId) {
+      button.classList.add('active');
+    } else {
+      button.classList.remove('active');
+    }
+  });
+}
 
     // 全ての購入個数を0にリセットする関数
     function resetApp() {
@@ -692,19 +703,6 @@ catch (err) {
   confirmBtn.textContent = "会計を確定";
 }
             }
-
-
-    function switchRegister(registerId) {
-      currentRegisterId = registerId;
-      const buttons = document.querySelectorAll('#registerButtons button');
-      buttons.forEach((button,index)=>{
-        if (registers[index].register_id === registerId) {
-          button.classList.add('active');
-        } else {
-          button.classList.remove('active');
-        }
-      });
-    }
     
     let SLOT_TO_PRODUCT = {};
 
