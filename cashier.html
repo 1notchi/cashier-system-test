@@ -90,40 +90,43 @@
   <div id="toastMessage" class="toast-message">お会計が完了しました！</div>
 
   <script>
-// ==========================================
-    // 💡 1. 状態管理変数の一元化（修正版）
     // ==========================================
-    // 既存の supabase 読み込み関数（グローバルな supabase オブジェクト）を使用します
-    const supabase = window.supabase ? window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY) : null;
-
-    if (!supabase) {
-        console.error("Supabaseクライアントの初期化に失敗しました。ライブラリの読み込みを確認してください。");
-    }
+    // 💡 1. 状態管理変数の一元化とSupabase初期化
+    // ==========================================
+    // グローバルに読み込まれているはずの supabase オブジェクトからクライアントを作成
+    const supabase = (window.supabase && typeof window.supabase.createClient === 'function')
+        ? window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY)
+        : (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
 
     let itemMaster = Array(16).fill(null); // 1〜16のスロットを保持する配列
     let registerMaster = [];              // レジ名とIDのペアを保持
 
     let currentRegister = "NF";           // 現在選択中のレジ名
     let cart = {};                        // カートの中身 { product_id: 数量 }
-    let orderHistory = [];
     let currentTotal = 0;
 
-    // 初期化イベントの一元管理
+    // アプリの自動起動
     window.addEventListener('DOMContentLoaded', () => {
       initApp();
     });
 
     // ==========================================
-    // 💡 2. アプリ初期化：Supabaseからマスターを取得
+    // 💡 2. アプリ初期化：Supabaseからデータを取得
     // ==========================================
     async function initApp() {
+        if (!supabase) {
+            console.error("Supabaseクライアントが正しく初期化できませんでした。");
+            alert("通信エラー：Supabaseのライブラリが読み込めていません。");
+            return;
+        }
+
         try {
-            // レジマスタの取得
+            // ① レジマスタの取得
             const { data: regData, error: regError } = await supabase.from('registers').select('*');
             if (regError) throw regError;
             registerMaster = regData;
 
-            // 表示スロットと商品のデータを結合して取得
+            // ② 表示スロットと商品のデータを結合して取得
             const { data: slotData, error: slotError } = await supabase
                 .from('display_slots')
                 .select(`
@@ -139,6 +142,7 @@
             slotData.forEach(slot => {
                 if (slot.products) {
                     itemMaster[slot.slot_id - 1] = {
+                        slot_id: slot.slot_id,
                         id: slot.products.product_id,
                         product_id: slot.products.product_id,
                         name: slot.products.product_name,
@@ -147,30 +151,82 @@
                 }
             });
 
-            // ⚠️ 既存コードにある「renderGrid()」が別ファイル等で定義されている場合は実行
-            if (typeof renderGrid === 'function') renderGrid();
+            // 💥 消えていた重要処理：画面に16枚のカードを描画する
+            renderGrid();
             
+            // 金額の初期計算
             updateTotal();
         } catch (err) {
-            console.error("初期データの取得に失敗しました:", err);
+            console.error("初期データの取得または描画に失敗しました:", err);
             alert("データの読み込みに失敗しました。ページを再読み込みしてください。");
         }
     }
 
     // ==========================================
-    // 💡 3. カート状態の同期と計算ロジック
+    // 💡 3. 💥 ごっそり消えていた画面描画関数 (renderGrid) の復元
     // ==========================================
-    
-    // 画面の数字からカート変数(cart)を一括更新する関数
+    function renderGrid() {
+        const gridContainer = document.querySelector('.grid-container') || document.getElementById('gridContainer');
+        if (!gridContainer) {
+            console.error("カードを表示するための grid-container がHTML内に見つかりません。");
+            return;
+        }
+
+        // 一旦中身を空にする
+        gridContainer.innerHTML = "";
+
+        // 1から16までのカードをループで生成
+        for (let i = 0; i < 16; i++) {
+            const item = itemMaster[i];
+            const card = document.createElement('div');
+            card.className = 'item-card';
+            card.setAttribute('data-item-id', `item_${i + 1}`);
+
+            if (item) {
+                // 商品が割り当てられているマス
+                card.innerHTML = `
+                    <div class="click-area" onclick="plusFromCard(this)">
+                        <div class="item-name">${item.name}</div>
+                        <div class="item-price">${item.price.toLocaleString()}円</div>
+                    </div>
+                    <div class="quantity-control">
+                        <button class="btn-minus" onclick="minus(this)">-</button>
+                        <span class="qty-count">0</span>
+                        <button class="btn-plus" onclick="plus(this)">+</button>
+                    </div>
+                `;
+            } else {
+                // 空白のマス（商品未設定）
+                card.classList.add('empty-card');
+                card.innerHTML = `
+                    <div class="click-area">
+                        <div class="item-name" style="color: #999;">未設定 (枠 ${i + 1})</div>
+                        <div class="item-price">-</div>
+                    </div>
+                    <div class="quantity-control" style="visibility: hidden;">
+                        <span class="qty-count">0</span>
+                    </div>
+                `;
+            }
+
+            gridContainer.appendChild(card);
+        }
+    }
+
+    // ==========================================
+    // 💡 4. カート状態の同期と計算ロジック
+    // ==========================================
     function syncCartFromDOM() {
       cart = {};
       const cards = document.querySelectorAll('.item-card');
       cards.forEach(card => {
-        // もしHTML側が slot_id (1-16) 等で data-item-id を持っている場合を考慮
         const itemId = card.getAttribute('data-item-id'); 
-        const count = parseInt(card.querySelector('.qty-count').textContent) || 0;
+        const countSpan = card.querySelector('.qty-count');
+        if (!countSpan) return;
         
-        // item_1 から数字だけを抽出するか、スロットインデックスから商品IDを特定
+        const count = parseInt(countSpan.textContent) || 0;
+        if (count <= 0) return;
+
         let index = -1;
         if (itemId && itemId.startsWith('item_')) {
           index = parseInt(itemId.replace('item_', '')) - 1;
@@ -179,22 +235,20 @@
         }
 
         const product = itemMaster[index];
-        if (product && count > 0) {
+        if (product) {
           cart[product.product_id] = count;
         }
       });
     }
 
-    // 合計金額をその場で計算して返す関数（submitPaymentのエラー対策）
     function calculateTotal() {
       return currentTotal;
     }
 
-    // 合計金額の計算（修正版）
     function updateTotal() {
       const cards = document.querySelectorAll('.item-card');
 
-      let a = 0; // マスガチャ以外の通常商品数
+      let a = 0; // 通常商品数
       let b = 0; // マスガチャの購入数
       let c = 0; // 100円割引の枚数
       let d = 0; // 200円割引の枚数
@@ -204,7 +258,11 @@
 
       cards.forEach(card => {
         const itemId = card.getAttribute('data-item-id');
-        const count = parseInt(card.querySelector('.qty-count').textContent) || 0;
+        const countSpan = card.querySelector('.qty-count');
+        if (!countSpan) return;
+        
+        const count = parseInt(countSpan.textContent) || 0;
+        if (count <= 0) return;
         
         let index = -1;
         if (itemId && itemId.startsWith('item_')) {
@@ -214,9 +272,8 @@
         }
         
         const itemData = itemMaster[index];
-        if (!itemData || count <= 0) return;
+        if (!itemData) return;
 
-        // 商品名で割引やガチャを判定
         if (itemData.name === "マスガチャ") {
           b += count;
           normalProductsSubtotal += itemData.price * count;
@@ -254,9 +311,9 @@
       const finalDiscountTotal = (c * -100) + (d * -200) + (e * -300);
       let total = normalProductsSubtotal + finalDiscountTotal;
 
-      const otherPriceInput = document.getElementById('inputOtherPrice').value;
-      if (otherPriceInput !== "") {
-        total += parseInt(otherPriceInput);
+      const otherPriceInput = document.getElementById('inputOtherPrice');
+      if (otherPriceInput && otherPriceInput.value !== "") {
+        total += parseInt(otherPriceInput.value);
       }
 
       if (total < 0) {
@@ -268,12 +325,11 @@
       if (totalAmountSpan) totalAmountSpan.textContent = total.toLocaleString() + '円';
       currentTotal = total;
 
-      // 金額変更のタイミングで最新のDOM状態をカート変数に同期
       syncCartFromDOM();
     }
 
     // ==========================================
-    // 💡 4. ボタン操作イベント
+    // 💡 5. ボタン・カード操作イベント
     // ==========================================
     function resetApp() {
       const counts = document.querySelectorAll('.qty-count');
@@ -281,8 +337,10 @@
         span.textContent = '0';
         updateCountColor(span);
       });
-      document.getElementById('inputOtherName').value = "";
-      document.getElementById('inputOtherPrice').value = "";
+      const inputName = document.getElementById('inputOtherName');
+      const inputPrice = document.getElementById('inputOtherPrice');
+      if (inputName) inputName.value = "";
+      if (inputPrice) inputPrice.value = "";
       updateTotal();
     }
 
@@ -290,14 +348,15 @@
       const cards = document.querySelectorAll('.item-card');
       cards.forEach(card => {
         const itemId = card.getAttribute('data-item-id');
-        // HTML側が 'item_13' のような文字列で管理している場合
         if (itemId === "item_13" || itemId === "item_14") {
           const countSpan = card.querySelector('.qty-count');
-          let count = parseInt(countSpan.textContent) || 0;
-          if (count < 20) {
-            count++;
-            countSpan.textContent = count;
-            updateCountColor(countSpan);
+          if (countSpan) {
+            let count = parseInt(countSpan.textContent) || 0;
+            if (count < 20) {
+              count++;
+              countSpan.textContent = count;
+              updateCountColor(countSpan);
+            }
           }
         }
       });
@@ -306,6 +365,7 @@
 
     function plusFromCard(clickArea) {
       const quantityControl = clickArea.nextElementSibling;
+      if (!quantityControl) return;
       const countSpan = quantityControl.querySelector('.qty-count');
       let count = parseInt(countSpan.textContent) || 0;
       if (count < 20) {
@@ -349,6 +409,7 @@
 
     function validateOtherPrice() {
       const priceInput = document.getElementById('inputOtherPrice');
+      if (!priceInput) return;
       let valStr = priceInput.value;
       if (valStr === "") {
         updateTotal();
@@ -366,21 +427,20 @@
     }
 
     // ==========================================
-    // 💡 5. モーダル制御 & 会計確定（Supabase送信）
+    // 💡 6. モーダル制御 & 会計確定
     // ==========================================
     function openModal() {
-      syncCartFromDOM(); // モーダルを開く直前に確実にカートを同期
+      syncCartFromDOM();
       const cards = document.querySelectorAll('.item-card');
 
       let totalQuantityAll = 0;
       let totalQuantityDiscount = 0;
       let totalQuantityNormal = 0;
 
-      let a = 0; let b = 0; let c = 0; let d = 0; let e = 0;
-
       cards.forEach(card => {
         const itemId = card.getAttribute('data-item-id');
-        const count = parseInt(card.querySelector('.qty-count').textContent) || 0;
+        const countSpan = card.querySelector('.qty-count');
+        const count = countSpan ? (parseInt(countSpan.textContent) || 0) : 0;
         totalQuantityAll += count;
 
         let index = -1;
@@ -394,20 +454,15 @@
 
         if (itemData.name.includes("割引")) {
           totalQuantityDiscount += count;
-          if (itemData.name.includes("100円")) c += count;
-          if (itemData.name.includes("200円")) d += count;
-          if (itemData.name.includes("300円")) e += count;
         } else {
           totalQuantityNormal += count;
-          if (itemData.name === "マスガチャ") b += count;
-          else if (itemData.price > 0) a += count;
         }
       });
 
-      const otherPriceInput = document.getElementById('inputOtherPrice').value;
-      const otherPrice = otherPriceInput !== "" ? parseInt(otherPriceInput) : 0;
+      const otherPriceInput = document.getElementById('inputOtherPrice');
+      const otherPrice = (otherPriceInput && otherPriceInput.value !== "") ? parseInt(otherPriceInput.value) : 0;
 
-      if (totalQuantityAll === 0 && otherPrice <= 0) {
+      if (totalQuantityAll === 0 && otherPrice === 0) {
         alert("商品が選択されていません。");
         return;
       }
@@ -424,55 +479,61 @@
       }
 
       const receiptList = document.getElementById('modalReceiptList');
-      receiptList.innerHTML = "";
+      if (receiptList) {
+        receiptList.innerHTML = "";
+        cards.forEach(card => {
+          const itemId = card.getAttribute('data-item-id');
+          const countSpan = card.querySelector('.qty-count');
+          const count = countSpan ? (parseInt(countSpan.textContent) || 0) : 0;
 
-      // レシート明細の生成
-      cards.forEach(card => {
-        const itemId = card.getAttribute('data-item-id');
-        const count = parseInt(card.querySelector('.qty-count').textContent) || 0;
+          if (count > 0) {
+            let index = -1;
+            if (itemId && itemId.startsWith('item_')) {
+              index = parseInt(itemId.replace('item_', '')) - 1;
+            } else {
+              index = parseInt(itemId) - 1;
+            }
+            const itemData = itemMaster[index];
+            if(itemData) {
+              const row = document.createElement('div');
+              row.className = 'receipt-item';
+              row.innerHTML = `
+                <span>・${itemData.name} (${itemData.price.toLocaleString()}円)</span>
+                <span>× ${count}</span>
+              `;
+              receiptList.appendChild(row);
+            }
+          }
+        });
 
-        if (count > 0) {
-          let index = -1;
-          if (itemId && itemId.startsWith('item_')) {
-            index = parseInt(itemId.replace('item_', '')) - 1;
-          } else {
-            index = parseInt(itemId) - 1;
-          }
-          const itemData = itemMaster[index];
-          if(itemData) {
-            const row = document.createElement('div');
-            row.className = 'receipt-item';
-            row.innerHTML = `
-              <span>・${itemData.name} (${itemData.price.toLocaleString()}円)</span>
-              <span>× ${count}</span>
-            `;
-            receiptList.appendChild(row);
-          }
+        if (otherPrice !== 0) {
+          const otherNameInput = document.getElementById('inputOtherName');
+          const label = otherNameInput && otherNameInput.value ? otherNameInput.value : (otherPrice > 0 ? "その他" : "その他（値引き）");
+          const row = document.createElement('div');
+          row.className = 'receipt-item';
+          row.innerHTML = `
+            <span>・${label}</span>
+            <span>${otherPrice.toLocaleString()}円</span>
+          `;
+          receiptList.appendChild(row);
         }
-      });
-
-      if (otherPrice !== 0) {
-        const label = otherPrice > 0 ? "その他" : "その他（値引き）";
-        const row = document.createElement('div');
-        row.className = 'receipt-item';
-        row.innerHTML = `
-          <span>・${label}</span>
-          <span>${otherPrice.toLocaleString()}円</span>
-        `;
-        receiptList.appendChild(row);
       }
 
       document.getElementById('modalTotalAmount').textContent = currentTotal.toLocaleString() + '円';
       const depositInput = document.getElementById('inputDeposit');
-      depositInput.value = "";
-      depositInput.placeholder = currentTotal;
+      if (depositInput) {
+        depositInput.value = "";
+        depositInput.placeholder = currentTotal;
+      }
 
       calcChange();
 
       document.getElementById('modalRegisterType').textContent = currentRegister + "レジ";
       document.getElementById('checkoutModal').style.display = 'flex';
 
-      setTimeout(() => { depositInput.focus(); }, 50);
+      if (depositInput) {
+        setTimeout(() => { depositInput.focus(); }, 50);
+      }
     }
 
     function closeModal() {
@@ -486,39 +547,45 @@
     }
 
     function calcChange() {
-      let depositInput = document.getElementById('inputDeposit').value;
+      const depositInputEle = document.getElementById('inputDeposit');
+      let depositInput = depositInputEle ? depositInputEle.value : "";
       const changeSpan = document.getElementById('modalChangeAmount');
       const confirmBtn = document.getElementById('btnConfirmPayment');
 
       if (depositInput === "") {
-        changeSpan.textContent = "0円";
-        changeSpan.classList.remove('shortage');
-        confirmBtn.disabled = false;
+        if (changeSpan) {
+            changeSpan.textContent = "0円";
+            changeSpan.classList.remove('shortage');
+        }
+        if (confirmBtn) confirmBtn.disabled = false;
         return;
       }
 
       let deposit = parseInt(depositInput);
       if (deposit > 150000) {
         deposit = 150000;
-        document.getElementById('inputDeposit').value = 150000;
+        if (depositInputEle) depositInputEle.value = 150000;
       } else if (deposit < 0 || isNaN(deposit)) {
         deposit = 0;
-        document.getElementById('inputDeposit').value = 0;
+        if (depositInputEle) depositInputEle.value = 0;
       }
 
       const change = deposit - currentTotal;
       if (change < 0) {
-        changeSpan.textContent = "不足: " + Math.abs(change).toLocaleString() + "円";
-        changeSpan.classList.add('shortage');
-        confirmBtn.disabled = true;
+        if (changeSpan) {
+            changeSpan.textContent = "不足: " + Math.abs(change).toLocaleString() + "円";
+            changeSpan.classList.add('shortage');
+        }
+        if (confirmBtn) confirmBtn.disabled = true;
       } else {
-        changeSpan.textContent = change.toLocaleString() + "円";
-        changeSpan.classList.remove('shortage');
-        confirmBtn.disabled = false;
+        if (changeSpan) {
+            changeSpan.textContent = change.toLocaleString() + "円";
+            changeSpan.classList.remove('shortage');
+        }
+        if (confirmBtn) confirmBtn.disabled = false;
       }
     }
 
-    // 💡 売上確定とSupabase送信（完全版）
     async function submitPayment() {
         const total = calculateTotal();
         if (total === 0 && Object.keys(cart).length === 0) {
@@ -533,7 +600,7 @@
         }
 
         try {
-            // 1. 会計親テーブル(sales)に挿入
+            // 1. sales テーブルに挿入
             const { data: saleResult, error: saleError } = await supabase
                 .from('sales')
                 .insert([{ register_id: currentRegInfo.register_id }])
@@ -543,7 +610,7 @@
             if (saleError) throw saleError;
             const newSaleId = saleResult.sale_id;
 
-            // 2. 会計明細テーブル(sale_items)用のデータ配列を作成
+            // 2. 明細データ作成
             const saleItemsData = Object.keys(cart).map(productId => {
                 const item = itemMaster.find(i => i && i.product_id == productId);
                 return {
@@ -555,22 +622,22 @@
                 };
             });
 
-            // 「その他」自由入力枠に金額がある場合、ダミー商品（またはその他レコード）として明細追加
-            const otherName = document.getElementById('inputOtherName').value || 'その他';
-            const otherPriceInput = document.getElementById('inputOtherPrice').value;
-            if (otherPriceInput !== "") {
-                // 💡 注意: product_idマスタに「その他(自由入力枠用)」のID（例: 999など）があればそれを、
-                // なければ一先ず1番などを借りるか、DB設計に合わせてproduct_idを指定してください。
+            // 「その他」の金額がある場合
+            const otherPriceInput = document.getElementById('inputOtherPrice');
+            const otherPrice = (otherPriceInput && otherPriceInput.value !== "") ? parseInt(otherPriceInput.value) : 0;
+            if (otherPrice !== 0) {
+                const otherNameInput = document.getElementById('inputOtherName');
+                const otherName = otherNameInput && otherNameInput.value ? otherNameInput.value : 'その他';
                 saleItemsData.push({
                     sale_id: newSaleId,
-                    product_id: 1, // 暫定。実態に合わせて変更してください
+                    product_id: 1, // ※環境に合わせて適切なproduct_idに調整してください
                     quantity: 1,
-                    unit_price: parseInt(otherPriceInput),
+                    unit_price: otherPrice,
                     other_product_name: otherName
                 });
             }
 
-            // 3. 明細を一括インサート
+            // 3. 一括インサート
             if (saleItemsData.length > 0) {
                 const { error: itemsError } = await supabase
                     .from('sale_items')
@@ -578,12 +645,11 @@
                 if (itemsError) throw itemsError;
             }
 
-            // 成功後のクリーンアップ処理
+            // クリーンアップ
             cart = {};
             closeModal();
             resetApp();
 
-            // トースト表示
             const toast = document.getElementById('toastMessage');
             if (toast) {
                 toast.classList.add('show');
@@ -592,10 +658,13 @@
 
         } catch (err) {
             console.error("売上データの保存に失敗しました:", err);
-            alert('データベースへの保存に失敗しました。通信環境やテーブル設定を確認してください。');
+            alert('データベースへの保存に失敗しました。');
         }
     }
 
+    // ==========================================
+    // 💡 7. レジの切り替え関数
+    // ==========================================
     function switchRegister(mode) {
       if (currentRegister === mode) return;
       currentRegister = mode;
@@ -615,7 +684,6 @@
       console.log("現在のレジモード:", currentRegister);
     }
   </script>
-
 </body>
 
 </html>
