@@ -91,9 +91,10 @@
 
   <script>
 // ==========================================
-    // ステップ1: Supabaseの初期化と接続テスト
+    // ステップ1: Supabaseの初期化と接続テスト（修正版）
     // ==========================================
-    const supabase = typeof supabaseUrl !== 'undefined' && typeof supabaseKey !== 'undefined'
+    // グローバルに読み込まれている supabaseJS のオブジェクトから client を生成します
+    const supabase = (typeof supabaseUrl !== 'undefined' && typeof supabaseKey !== 'undefined')
       ? supabase.createClient(supabaseUrl, supabaseKey)
       : null;
 
