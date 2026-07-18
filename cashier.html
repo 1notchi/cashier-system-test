@@ -666,6 +666,28 @@
   console.log("data =", data);
   console.log("error =", error);
 }
+    
+    let SLOT_TO_PRODUCT = {};
+
+    async function loadSlotMapping() {
+
+  const { data, error } = await mySupabase
+    .from('display_slots')
+    .select('slot_id, product_id');
+
+  console.log(data);
+  console.log(error);
+
+  if (error) return;
+
+  data.forEach(row => {
+    SLOT_TO_PRODUCT[
+      `item_${String(row.slot_id).padStart(2, '0')}`
+    ] = row.product_id;
+  });
+
+  console.log(SLOT_TO_PRODUCT);
+}
   </script>
 
 </body>
