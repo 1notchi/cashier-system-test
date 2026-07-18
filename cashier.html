@@ -140,6 +140,12 @@
       });
     }
 
+    // Supabaseクライアント生成
+    const supabase = window.supabase.createClient(
+      CONFIG.SUPABASE_URL,
+      CONFIG.SUPABASE_KEY
+    );
+    
     window.onload = initApp;
 
     // 全ての購入個数を0にリセットする関数
@@ -634,6 +640,19 @@
 
       console.log("現在のレジモード:", currentRegister);
     }
+
+    async function testSupabaseConnection() {
+
+  console.log("接続テスト開始");
+
+  const { data, error } = await supabase
+    .from('registers')
+    .select('*');
+
+  console.log("data =", data);
+  console.log("error =", error);
+
+}
   </script>
 
 </body>
