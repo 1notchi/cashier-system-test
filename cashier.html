@@ -575,14 +575,7 @@
       // 💡 `<?= getAppUrl(); ?>` の代わりに、config.jsの `GAS_WEB_APP_URL` を使います
       const targetUrl = typeof GAS_WEB_APP_URL !== 'undefined' ? GAS_WEB_APP_URL : "<?= getAppUrl(); ?>";
 
-      /*fetch(targetUrl, {
-        method: "POST",
-        mode: "no-cors", // 💡 CORS制限をすり抜けるための no-cors
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(payload)
-      })*/
+      
       try {
 
   const registerMap = {
@@ -609,6 +602,14 @@
 catch (err) {
   console.error(err);
 }
+        /*fetch(targetUrl, {
+        method: "POST",
+        mode: "no-cors", // 💡 CORS制限をすり抜けるための no-cors
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      })
         .then(response => {
           // 💡 `no-cors` の場合、正常に届いても response.ok は false (statusが0) になります。
           // そのため、ここでは通信した事実そのものを成功として扱い、正常ルートの処理を進めます。
@@ -635,7 +636,7 @@ catch (err) {
           // ボタンの状態を元に戻す
           confirmBtn.disabled = false;
           confirmBtn.textContent = "会計を確定";
-        });
+        });*/
     }
     // 3つのレジモード（NF / 北部祭 / 移動販売）を切り替える関数
     let currentRegister = "NF"; // 初期値はNFレジ
