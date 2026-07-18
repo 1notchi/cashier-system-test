@@ -598,6 +598,44 @@
   console.log("saleData =", saleData);
   console.log("saleError =", saleError);
 
+        if (saleError) {
+  throw saleError;
+}
+
+const saleItems = [];
+
+Object.entries(itemCounts).forEach(([itemId, quantity]) => {
+
+  if (quantity <= 0) return;
+
+  const productId = SLOT_TO_PRODUCT[itemId];
+
+  if (productId == null) return;
+
+  saleItems.push({
+    sale_id: saleData.sale_id,
+    product_id: productId,
+    quantity: quantity,
+    unit_price: ITEM_MASTER[itemId].price,
+    other_product_name: null
+  });
+
+
+});
+
+      if (otherPrice !== 0) {
+
+  saleItems.push({
+    sale_id: saleData.sale_id,
+    product_id: 0,
+    quantity: 1,
+    unit_price: otherPrice,
+    other_product_name: otherName || null
+  });
+
+}
+        console.log("saleItems =", saleItems);
+
 }
 catch (err) {
   console.error(err);
