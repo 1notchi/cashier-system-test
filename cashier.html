@@ -645,7 +645,7 @@
 
   console.log("接続テスト開始");
 
-  const { data, error } = await supabase
+  const { data, error } = await mySupabase
     .from('registers')
     .select('*');
 
