@@ -639,9 +639,35 @@ Object.entries(itemCounts).forEach(([itemId, quantity]) => {
 }
         console.log("saleItems =", saleItems);
 
+        const { error: itemError } =
+  await mySupabase
+    .from('sale_items')
+    .insert(saleItems);
+
+console.log("itemError =", itemError);
+
+if (itemError) {
+  throw itemError;
+}
+
+        closeModal();
+resetApp();
+
+const toast = document.getElementById('toastMessage');
+if (toast) {
+  toast.classList.add('show');
+  setTimeout(() => {
+    toast.classList.remove('show');
+  }, 3000);
+}
+
 }
 catch (err) {
   console.error(err);
+}
+        finally {
+  confirmBtn.disabled = false;
+  confirmBtn.textContent = "会計を確定";
 }
         /*fetch(targetUrl, {
         method: "POST",
