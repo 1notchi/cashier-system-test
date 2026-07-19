@@ -21,6 +21,8 @@
     <a href="sales.html" class="btn btn-sales">売上確認へ</a>
   </div>
 
+  <button onclick="logout()">ログアウト</button>
+
   <script>
     // Supabaseクライアント生成
     const mySupabase = window.supabase.createClient(
@@ -38,6 +40,11 @@
         return;
       }
     };
+
+    async function logout() {
+      await mySupabase.auth.signOut();
+      location.href = "login.html";
+    }
   </script>
 
 </body>
