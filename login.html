@@ -82,6 +82,16 @@
       CONFIG.SUPABASE_KEY
     );
 
+    window.onload = async () => {
+      const {
+        data: { session }
+      } = await mySupabase.auth.getSession();
+
+      if (session) {
+        location.href = "cashier.html";
+      }
+    };
+
     async function login() {
 
       const email =
@@ -102,7 +112,7 @@
         return;
       }
 
-      location.href = 'cashier.html';
+      location.href = 'top.html';
     }
   </script>
 
