@@ -148,6 +148,14 @@
     );
     
     window.onload = async () => {
+      //ログインしていなかったらログイン画面に戻す
+      const {
+        data: { session }
+      } = await mySupabase.auth.getSession();
+      if (!session) {
+        location.href = "login.html";
+        return;
+      }
       await loadSlotMapping();
       await loadRegisters();
       initApp();
