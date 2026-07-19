@@ -7,6 +7,8 @@
   <meta name="robots" content="noindex, nofollow">
   <title>学祭レジシステム - トップ</title>
   <link rel="stylesheet" href="style_index.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
 </head>
 
 <body>
@@ -20,6 +22,12 @@
   </div>
 
   <script>
+    // Supabaseクライアント生成
+    const mySupabase = window.supabase.createClient(
+      CONFIG.SUPABASE_URL,
+      CONFIG.SUPABASE_KEY
+    );
+    
     window.onload = async () => {
       //ログインしていなかったらログイン画面に戻す
       const {
