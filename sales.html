@@ -132,6 +132,12 @@
       fetchSalesData();
     };
 
+    // Supabaseクライアント生成
+    const mySupabase = window.supabase.createClient(
+      CONFIG.SUPABASE_URL,
+      CONFIG.SUPABASE_KEY
+    );
+
     //新処理
     window.onload = async () => {
       //ログインしていなかったらログイン画面に戻す
