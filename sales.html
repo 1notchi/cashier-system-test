@@ -121,6 +121,7 @@
     const TARGET_DATES = ["2026/11/20", "2026/11/21", "2026/11/22", "2026/11/23"];
 
     // === 2. 画面起動時の処理 ===
+    //GAS時代の旧処理
     window.onload = function () {
       // 今日の日付(MM/dd)をラベルにセット
       const now = new Date();
@@ -129,6 +130,18 @@
       document.getElementById('txtTodayLabel').innerText = `(${mm}/${dd})`;
 
       fetchSalesData();
+    };
+
+    //新処理
+    window.onload = async () => {
+      //ログインしていなかったらログイン画面に戻す
+      const {
+        data: { session }
+      } = await mySupabase.auth.getSession();
+      if (!session) {
+        location.href = "login.html";
+        return;
+      }
     };
 
     // === 3. 本番通信ロジック：GASから最新データを取得（修正版） ===
