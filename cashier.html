@@ -89,24 +89,7 @@
 
   <script>
     // 商品マスターデータ
-    const ITEM_MASTER = {
-      "item_01": { name: "部誌", price: 1300 },
-      "item_02": { name: "バックナンバー", price: 500 },
-      "item_03": { name: "-", price: 0 },
-      "item_04": { name: "-", price: 0 },
-      "item_05": { name: "数学模試（理系①）", price: 600 },
-      "item_06": { name: "数学模試（理系②）", price: 600 },
-      "item_07": { name: "数学模試（文系①）", price: 600 },
-      "item_08": { name: "数学模試（文系②）", price: 600 },
-      "item_09": { name: "物理模試", price: 600 },
-      "item_10": { name: "化学模試", price: 600 },
-      "item_11": { name: "生物模試", price: 600 },
-      "item_12": { name: "地学模試", price: 600 },
-      "item_13": { name: "マスガチャ", price: 100 },
-      "item_14": { name: "マスガチャ割引", price: -100 },
-      "item_15": { name: "マスガチャ割引", price: -200 },
-      "item_16": { name: "マスガチャ割引", price: -300 }
-    };
+    let ITEM_MASTER = {};
 
     // 3つのレジモード（NFレジ / 北部祭レジ / 移動販売）を切り替える関数
     let registers = [];
@@ -157,9 +140,47 @@
         return;
       }
       await loadSlotMapping();
+      await loadItemMaster();
       await loadRegisters();
       initApp();
     };
+
+    async function loadItemMaster() {
+
+  const { data, error } =
+    await mySupabase
+      .from('display_slots')
+      .select(`
+        slot_id,
+        products (
+          product_name,
+          current_price
+        )
+      `)
+      .order('slot_id');
+
+  if (error) {
+    console.error(error);
+    return;
+  }
+
+  ITEM_MASTER = {};
+
+  data.forEach(row => {
+    const itemId =`item_${String(row.slot_id).padStart(2,'0')}`;
+    if (!row.products) {
+      ITEM_MASTER[itemId] = {
+        name: '-',
+        price: 0
+      };
+      return;
+    }
+    ITEM_MASTER[itemId] = {
+      name: row.products.product_name,
+      price: row.products.current_price
+    };
+  });
+}
 
     async function loadRegisters() {
       const { data, error } = await mySupabase
