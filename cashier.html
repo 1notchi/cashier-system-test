@@ -229,8 +229,8 @@
         card.setAttribute('data-item-id', itemId);
 
         // 未設定スロット
-        if (!itemData.productId) {
-          card.classList.add('empty-card');
+        if (itemData.productId === null) {
+          //card.classList.add('empty-card');
           container.appendChild(card);
           return;
         }
