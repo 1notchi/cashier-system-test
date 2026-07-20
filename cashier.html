@@ -179,7 +179,7 @@
         if (!row.products) {
           ITEM_MASTER[itemId] = {
             productId: null,
-            name: '-',
+            name: null,
             price: 0
           };
           return;
@@ -227,17 +227,26 @@
         const card = document.createElement('div');
         card.className = 'item-card';
         card.setAttribute('data-item-id', itemId);
+
+        // 未設定スロット
+        if (!itemData.productId) {
+          card.classList.add('empty-card');
+          container.appendChild(card);
+          return;
+        }
+
         card.innerHTML = `
-         <div class="item-click-area" onclick="plusFromCard(this)">
-           <p class="item-name">${itemData.name}</p>
-           <div class="item-price">${itemData.price.toLocaleString()}円</div>
-         </div>
-         <div class="quantity-control">
-           <button class="btn-qty" onclick="minus(this)">-</button>
-           <span class="qty-count">0</span>
-           <button class="btn-qty" onclick="plus(this)">+</button>
-         </div>
-       `;
+          <div class="item-click-area" onclick="plusFromCard(this)">
+            <p class="item-name">${itemData.name}</p>
+            <div class="item-price">${itemData.price.toLocaleString()}円</div>
+          </div>
+          <div class="quantity-control">
+            <button class="btn-qty" onclick="minus(this)">-</button>
+            <span class="qty-count">0</span>
+            <button class="btn-qty" onclick="plus(this)">+</button>
+          </div>
+        `;
+
         container.appendChild(card);
       });
     }
