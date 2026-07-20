@@ -95,8 +95,8 @@
     // === 1. 状態管理と定数の定義 ===
     let currentRegisterMode = 'all'; // 'all', 'NF', '北部祭', '移動販売'
     let currentViewMode = 'qty';      // 'qty', 'amount'
-    let allSalesData = [];           // GASから取得した売上ログの全行データを格納する配列
-
+   let allSalesData = []; // Supabaseから取得した売上データ
+    
     // 💡 商品マスター（名前と単価を一元化して管理します）
     // "-" と書かれた商品は非表示になります
     const PRODUCT_MASTER = [
@@ -122,68 +122,83 @@
     const TARGET_DATES = ["2026/11/20", "2026/11/21", "2026/11/22", "2026/11/23"];
 
     // === 2. 画面起動時の処理 ===
-    //GAS時代の旧処理
-    window.onload = function () {
-      // 今日の日付(MM/dd)をラベルにセット
-      const now = new Date();
-      const mm = String(now.getMonth() + 1).padStart(2, '0');
-      const dd = String(now.getDate()).padStart(2, '0');
-      document.getElementById('txtTodayLabel').innerText = `(${mm}/${dd})`;
-
-      fetchSalesData();
-    };
-
-    // Supabaseクライアント生成
-    const mySupabase = window.supabase.createClient(
-      CONFIG.SUPABASE_URL,
-      CONFIG.SUPABASE_KEY
-    );
-
-    //新処理
     window.onload = async () => {
-      //ログインしていなかったらログイン画面に戻す
-      const {
-        data: { session }
-      } = await mySupabase.auth.getSession();
-      if (!session) {
-        location.href = "login.html";
-        return;
-      }
-    };
 
+  // ログイン確認
+  const {
+    data: { session }
+  } = await mySupabase.auth.getSession();
+
+  if (!session) {
+    location.href = "login.html";
+    return;
+  }
+
+  // 今日の日付表示
+  const now = new Date();
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const dd = String(now.getDate()).padStart(2, '0');
+
+  document.getElementById('txtTodayLabel').innerText =
+    `(${mm}/${dd})`;
+
+  // 売上データ取得
+  await fetchSalesData();
+
+};
+    
     // === 3. 本番通信ロジック：GASから最新データを取得（修正版） ===
-    function fetchSalesData() {
-      console.log("スプレッドシートから最新データを引っ張ります...");
-
+    async function fetchSalesData() {
+      console.log("Supabaseから売上データ取得開始");
       const tbody = document.getElementById('matrixTableBody');
       if (tbody) {
-        tbody.innerHTML = `<tr><td colspan="19" style="padding: 40px; color: #a0aec0;">🔄 サーバーから最新データを通信中...</td></tr>`;
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="19"
+              style="padding:40px;color:#a0aec0;">
+              🔄 データ取得中...
+            </td>
+          </tr>
+        `;
       }
 
-      // 💡 config.js で定義したURLに「?action=getSales」を付与して叩く
-      const apiUrl = `${GAS_WEB_APP_URL}?action=getSales`;
+  const { data, error } =
+    await mySupabase
+      .from('sales')
+      .select(`
+        sale_id,
+        register_id,
+        sold_at,
+        registers (register_name),
+        sale_items (product_id, quantity, unit_price, other_product_name)
+      `)
+      .order('sold_at');
 
-      fetch(apiUrl)
-        .then(response => {
-          if (!response.ok) {
-            throw new Error(`HTTPエラー! ステータス: ${response.status}`);
-          }
-          return response.json();
-        })
-        .then(data => {
-          allSalesData = data || [];
-          renderMatrixTable();
+  if (error) {
+    console.error(
+      "売上データ取得エラー:",
+      error
+    );
 
-          const now = new Date();
-          document.getElementById('txtLastUpdate').innerText = `最終更新: ${now.toLocaleTimeString('ja-JP')}`;
-        })
-        .catch(error => {
-          console.error("データ取得エラー:", error);
-          if (tbody) {
-            tbody.innerHTML = `<tr><td colspan="19" style="padding: 40px; color: #e53e3e; font-weight: bold;">❌ データの取得に失敗しました。再試行してください。<br><small style="color:#718096;">${error.message}</small></td></tr>`;
-          }
-        });
+    if (tbody) {
+      tbody.innerHTML = `
+      <tr>
+        <td colspan="19"
+        style="padding:40px;color:#e53e3e;">
+        ❌ データ取得失敗
+        </td>
+      </tr>
+      `;
     }
+    return;
+  }
+  console.log("取得データ:", data);
+  allSalesData = data;
+  renderMatrixTable();
+  const now = new Date();
+  document.getElementById('txtLastUpdate').innerText =
+    `最終更新: ${now.toLocaleTimeString('ja-JP')}`;
+}
     
     // === 4. UI操作イベント（切り替えボタン） ===
     function switchRegister(register, element) {
