@@ -129,7 +129,7 @@
       CONFIG.SUPABASE_URL,
       CONFIG.SUPABASE_KEY
     );
-    
+
     window.onload = async () => {
       //ログインしていなかったらログイン画面に戻す
       const {
@@ -139,48 +139,54 @@
         location.href = "login.html";
         return;
       }
-      await loadSlotMapping();
-      await loadItemMaster();
+      await loadDisplaySlots();
       await loadRegisters();
       initApp();
     };
 
-    async function loadItemMaster() {
+    async function loadDisplaySlots() {
 
-  const { data, error } =
-    await mySupabase
-      .from('display_slots')
-      .select(`
+      const { data, error } =
+        await mySupabase
+          .from('display_slots')
+          .select(`
         slot_id,
+        product_id,
         products (
           product_name,
           current_price
         )
       `)
-      .order('slot_id');
+          .order('slot_id');
 
-  if (error) {
-    console.error(error);
-    return;
-  }
+      if (error) {
+        console.error(error);
+        return;
+      }
 
-  ITEM_MASTER = {};
+      ITEM_MASTER = {};
 
-  data.forEach(row => {
-    const itemId =`item_${String(row.slot_id).padStart(2,'0')}`;
-    if (!row.products) {
-      ITEM_MASTER[itemId] = {
-        name: '-',
-        price: 0
-      };
-      return;
+      data.forEach(row => {
+
+        const itemId =
+          `item_${String(row.slot_id).padStart(2, '0')}`;
+
+        if (!row.products) {
+          ITEM_MASTER[itemId] = {
+            productId: null,
+            name: '-',
+            price: 0
+          };
+          return;
+        }
+
+        ITEM_MASTER[itemId] = {
+          productId: row.product_id,
+          name: row.products.product_name,
+          price: row.products.current_price
+        };
+      });
     }
-    ITEM_MASTER[itemId] = {
-      name: row.products.product_name,
-      price: row.products.current_price
-    };
-  });
-}
 
     async function loadRegisters() {
       const { data, error } = await mySupabase
@@ -192,7 +198,7 @@
         console.error(error);
         return;
       }
-    
+
       registers = data;
 
       // 初期レジ
@@ -202,40 +208,40 @@
     }
 
     function createRegisterButtons() {
-  const container = document.getElementById('registerButtons');
-  container.innerHTML = "";
+      const container = document.getElementById('registerButtons');
+      container.innerHTML = "";
 
-  registers.forEach(register => {
+      registers.forEach(register => {
 
-    const button = document.createElement('button');
+        const button = document.createElement('button');
 
-    button.type = "button";
-    button.className = "toggle-btn";
-    button.dataset.registerId = register.register_id;
-    button.textContent = register.register_name;
+        button.type = "button";
+        button.className = "toggle-btn";
+        button.dataset.registerId = register.register_id;
+        button.textContent = register.register_name;
 
-    button.onclick = () => {
-      switchRegister(register.register_id);
-    };
+        button.onclick = () => {
+          switchRegister(register.register_id);
+        };
 
-    if (register.register_id === currentRegisterId) {
-      button.classList.add('active');
+        if (register.register_id === currentRegisterId) {
+          button.classList.add('active');
+        }
+
+        container.appendChild(button);
+      });
     }
 
-    container.appendChild(button);
-  });
-}
-
-function switchRegister(registerId) {
-  currentRegisterId = registerId;
-  document.querySelectorAll('#registerButtons button').forEach(button => {
-    if (Number(button.dataset.registerId) === registerId) {
-      button.classList.add('active');
-    } else {
-      button.classList.remove('active');
+    function switchRegister(registerId) {
+      currentRegisterId = registerId;
+      document.querySelectorAll('#registerButtons button').forEach(button => {
+        if (Number(button.dataset.registerId) === registerId) {
+          button.classList.add('active');
+        } else {
+          button.classList.remove('active');
+        }
+      });
     }
-  });
-}
 
     // 全ての購入個数を0にリセットする関数
     function resetApp() {
@@ -654,101 +660,86 @@ function switchRegister(registerId) {
 
       try {
 
-  const { data: saleData, error: saleError } =
-    await mySupabase
-      .from('sales')
-      .insert([
-        {
-          register_id: currentRegisterId
-        }
-      ])
-      .select()
-      .single();
+        const { data: saleData, error: saleError } =
+          await mySupabase
+            .from('sales')
+            .insert([
+              {
+                register_id: currentRegisterId
+              }
+            ])
+            .select()
+            .single();
 
         if (saleError) {
-  throw saleError;
-}
+          throw saleError;
+        }
 
-const saleItems = [];
+        const saleItems = [];
 
-Object.entries(itemCounts).forEach(([itemId, quantity]) => {
+        Object.entries(itemCounts).forEach(([itemId, quantity]) => {
 
-  if (quantity <= 0) return;
+          if (quantity <= 0) return;
 
-  const productId = SLOT_TO_PRODUCT[itemId];
+          const productId = ITEM_MASTER[itemId].productId;
 
-  if (productId == null) return;
+          if (productId == null) return;
 
-  saleItems.push({
-    sale_id: saleData.sale_id,
-    product_id: productId,
-    quantity: quantity,
-    unit_price: ITEM_MASTER[itemId].price,
-    other_product_name: null
-  });
+          saleItems.push({
+            sale_id: saleData.sale_id,
+            product_id: productId,
+            quantity: quantity,
+            unit_price: ITEM_MASTER[itemId].price,
+            other_product_name: null
+          });
 
 
-});
+        });
 
-      if (otherPrice !== 0) {
+        if (otherPrice !== 0) {
 
-  saleItems.push({
-    sale_id: saleData.sale_id,
-    product_id: 0,
-    quantity: 1,
-    unit_price: otherPrice,
-    other_product_name: otherName || null
-  });
+          saleItems.push({
+            sale_id: saleData.sale_id,
+            product_id: 0,
+            quantity: 1,
+            unit_price: otherPrice,
+            other_product_name: otherName || null
+          });
 
-}
+        }
 
         const { error: itemError } =
-  await mySupabase
-    .from('sale_items')
-    .insert(saleItems);
+          await mySupabase
+            .from('sale_items')
+            .insert(saleItems);
 
-if (itemError) {
-  throw itemError;
-}
+        if (itemError) {
+          throw itemError;
+        }
 
         closeModal();
-resetApp();
+        resetApp();
 
-const toast = document.getElementById('toastMessage');
-if (toast) {
-  toast.classList.add('show');
-  setTimeout(() => {
-    toast.classList.remove('show');
-  }, 3000);
-}
+        const toast = document.getElementById('toastMessage');
+        if (toast) {
+          toast.classList.add('show');
+          setTimeout(() => {
+            toast.classList.remove('show');
+          }, 3000);
+        }
 
-}
-catch (err) {
-  console.error(err);
-  alert("売上データの保存に失敗しました。");
-}
-        finally {
-  confirmBtn.disabled = false;
-  confirmBtn.textContent = "会計を確定";
-}
-            }
-    
-    let SLOT_TO_PRODUCT = {};
+      }
+      catch (err) {
+        console.error(err);
+        alert("売上データの保存に失敗しました。");
+      }
+      finally {
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = "会計を確定";
+      }
+    }
 
-    async function loadSlotMapping() {
 
-  const { data, error } = await mySupabase
-    .from('display_slots')
-    .select('slot_id, product_id');
-
-  if (error) return;
-
-  data.forEach(row => {
-    SLOT_TO_PRODUCT[
-      `item_${String(row.slot_id).padStart(2, '0')}`
-    ] = row.product_id;
-  });
-}
   </script>
 
 </body>
