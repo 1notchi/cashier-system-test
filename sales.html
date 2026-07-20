@@ -96,6 +96,12 @@
     let currentRegisterMode = 'all'; // 'all', 'NF', '北部祭', '移動販売'
     let currentViewMode = 'qty';      // 'qty', 'amount'
    let allSalesData = []; // Supabaseから取得した売上データ
+
+    // Supabase接続用クライアント
+    const mySupabase = window.supabase.createClient(
+      CONFIG.SUPABASE_URL,
+      CONFIG.SUPABASE_KEY
+    );
     
     // 💡 商品マスター（名前と単価を一元化して管理します）
     // "-" と書かれた商品は非表示になります
