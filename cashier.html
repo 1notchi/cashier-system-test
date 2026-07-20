@@ -230,11 +230,12 @@
 
         // 未設定スロット
         if (itemData.productId === null) {
-          //card.classList.add('empty-card');
           container.appendChild(card);
           return;
         }
 
+        // 商品が設定されているカード
+        card.classList.add('item-enabled');
         card.innerHTML = `
           <div class="item-click-area" onclick="plusFromCard(this)">
             <p class="item-name">${itemData.name}</p>
@@ -246,7 +247,6 @@
             <button class="btn-qty" onclick="plus(this)">+</button>
           </div>
         `;
-
         container.appendChild(card);
       });
     }
@@ -416,7 +416,7 @@
     //現在のカート内容を集計する（updateTotal(), openModal()で使用）
     function collectCartData() {
 
-      const cards = document.querySelectorAll('.item-card');
+      const cards = document.querySelectorAll('.item-enabled');
 
       let a = 0; //通常商品の個数（マスガチャ除く）
       let b = 0; //マスガチャの個数
@@ -552,7 +552,7 @@
 
     // 会計確認モーダルを表示する
     function openModal() {
-      const cards = document.querySelectorAll('.item-card');
+      const cards = document.querySelectorAll('.item-enabled');
 
       // 現在のカート内容を取得
       const cart = collectCartData();
@@ -751,7 +751,7 @@
         }
 
         // 売上明細（sale_itemsテーブル）へ登録するデータを生成
-        const cards = document.querySelectorAll('.item-card');
+        const cards = document.querySelectorAll('.item-enabled');
         const saleItems = [];
         cards.forEach(card => {
           const itemId = card.dataset.itemId;
