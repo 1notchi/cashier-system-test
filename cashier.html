@@ -96,6 +96,8 @@
 
     let currentTotal = 0;
 
+    let currentRegisterId = null;
+
     // アプリ初期化：商品マスターから16個の箱を自動生成してHTMLに流し込む
     function initApp() {
       const container = document.getElementById('gridContainer');
@@ -642,16 +644,6 @@
       confirmBtn.disabled = true;
       confirmBtn.textContent = "送信中...";
 
-      // 2. 送信するデータの組み立て
-      const cards = document.querySelectorAll('.item-card');
-      const itemCounts = {};
-
-      // すべての商品（item_01〜item_16）の個数を集計して連想配列に格納
-      cards.forEach(card => {
-        const itemId = card.getAttribute('data-item-id');
-        const count = parseInt(card.querySelector('.qty-count').textContent);
-        itemCounts[itemId] = count;
-      });
 
       // 「その他」の入力状況（金額と商品名）を画面から確実に取得
       const otherPriceInput = document.getElementById('inputOtherPrice').value;
@@ -675,29 +667,25 @@
           throw saleError;
         }
 
+        const cards = document.querySelectorAll('.item-card');
         const saleItems = [];
-
-        Object.entries(itemCounts).forEach(([itemId, quantity]) => {
-
+        cards.forEach(card => {
+          const itemId = card.dataset.itemId;
+          const quantity = parseInt(card.querySelector('.qty-count').textContent);
           if (quantity <= 0) return;
-
-          const productId = ITEM_MASTER[itemId].productId;
-
-          if (productId == null) return;
-
+          const item = ITEM_MASTER[itemId];
+          if (!item?.productId) return;
+          
           saleItems.push({
             sale_id: saleData.sale_id,
-            product_id: productId,
-            quantity: quantity,
-            unit_price: ITEM_MASTER[itemId].price,
+            product_id: item.productId,
+            quantity,
+            unit_price: item.price,
             other_product_name: null
           });
-
-
         });
 
         if (otherPrice !== 0) {
-
           saleItems.push({
             sale_id: saleData.sale_id,
             product_id: 0,
@@ -705,7 +693,6 @@
             unit_price: otherPrice,
             other_product_name: otherName || null
           });
-
         }
 
         const { error: itemError } =
