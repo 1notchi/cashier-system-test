@@ -179,7 +179,7 @@
         if (!row.products) {
           ITEM_MASTER[itemId] = {
             productId: null,
-            name: null,
+            name: "",
             price: 0
           };
           return;
@@ -229,7 +229,7 @@
         card.setAttribute('data-item-id', itemId);
 
         // 未設定スロット
-        if (itemData.productId === null) {
+        if (itemData.productId === "") {
           //card.classList.add('empty-card');
           container.appendChild(card);
           return;
