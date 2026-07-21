@@ -154,6 +154,41 @@
 };
     
     // === 3. 本番通信ロジック：GASから最新データを取得（修正版） ===
+function convertSalesData(rawSales) {
+  return rawSales.map(sale => {
+    const items = Array(PRODUCT_MASTER.length).fill(0);
+    let otherPrice = 0;
+    let totalPrice = 0;
+    sale.sale_items.forEach(item => {
+      totalPrice += item.quantity * item.unit_price;
+
+      // その他商品
+      if (item.product_id === 0) {
+        otherPrice += item.unit_price;
+      } else {
+        const index = item.product_id - 1;
+        if (index >= 0 && index < items.length) {
+          items[index] += item.quantity;
+        }
+      }
+    });
+    
+    const soldDate = new Date(sale.sold_at);
+    const timestamp =
+      soldDate.getFullYear() + "/" +
+      String(soldDate.getMonth() + 1).padStart(2, '0') + "/" +
+      String(soldDate.getDate()).padStart(2, '0');
+    return {
+      timestamp,
+      register: sale.registers.register_name,
+      items,
+      otherPrice,
+      totalPrice
+    };
+  });
+}
+
+    
     async function fetchSalesData() {
       console.log("Supabaseから売上データ取得開始");
       const tbody = document.getElementById('matrixTableBody');
@@ -199,7 +234,8 @@
     return;
   }
   console.log("取得データ:", data);
-  allSalesData = data;
+  allSalesData = convertSalesData(data || []);
+  console.log(allSalesData);
   renderMatrixTable();
   const now = new Date();
   document.getElementById('txtLastUpdate').innerText =
