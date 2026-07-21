@@ -369,17 +369,26 @@ function convertSalesData(rawSales) {
         // 学祭の4日間に合致する場合のみ、各種集計を行う
         if (dateIndex !== -1) {
           // 有効な商品列だけループを回し、集計先の配列へとマッピングしながら加算
-          activeProductIndexes.forEach((masterIndex, i) => {
-            const qty = row.items[masterIndex] || 0;
-            const price = PRODUCT_MASTER[masterIndex].price;
+          activeSlots.forEach((slot, i) => {
 
-            if (currentViewMode === 'qty') {
-              dailyData[dateIndex][i] += qty;
-            } else {
-              dailyData[dateIndex][i] += (qty * price);
-            }
-          });
+  const productId = slot.product_id;
 
+  const qty =
+    row.items[productId] || 0;
+
+  const price =
+    slot.products.current_price;
+
+  if (currentViewMode === 'qty') {
+
+    dailyData[dateIndex][i] += qty;
+
+  } else {
+
+    dailyData[dateIndex][i] +=
+      qty * price;
+  }
+});
           // 「その他」の集計（配列の最後尾に格納）
           const otherColIndex = activeLength;
           if (currentViewMode === 'qty') {
