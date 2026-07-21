@@ -97,15 +97,19 @@
     let currentViewMode = 'qty';      // 'qty', 'amount'
    let allSalesData = []; // Supabaseから取得した売上データ
 
+    let products = [];
+    let displaySlots = [];
+
     // Supabase接続用クライアント
     const mySupabase = window.supabase.createClient(
       CONFIG.SUPABASE_URL,
       CONFIG.SUPABASE_KEY
     );
-    
+
+    // ここは削除
     // 💡 商品マスター（名前と単価を一元化して管理します）
     // "-" と書かれた商品は非表示になります
-    const PRODUCT_MASTER = [
+    /*const PRODUCT_MASTER = [
       { name: "部誌", price: 1300 },
       { name: "ﾊﾞｯｸﾅﾝﾊﾞｰ", price: 500 },
       { name: "-", price: 0 }, // 非表示対象
@@ -122,7 +126,7 @@
       { name: "-100", price: -100 },
       { name: "-200", price: -200 },
       { name: "-300", price: -300 }
-    ];
+    ];*/
 
     // 集計対象とする2026年の学祭4日間の日付リスト
     const TARGET_DATES = ["2026/11/20", "2026/11/21", "2026/11/22", "2026/11/23"];
@@ -149,35 +153,80 @@
     `(${mm}/${dd})`;
 
   // 売上データ取得
-  await fetchSalesData();
+  await loadMasterData();
+await fetchSalesData();
 
 };
+
+    async function loadMasterData() {
+
+  const { data: productData, error: productError } =
+    await mySupabase
+      .from('products')
+      .select('*');
+
+  if (productError) {
+    throw productError;
+  }
+
+  products = productData;
+
+  const { data: slotData, error: slotError } =
+    await mySupabase
+      .from('display_slots')
+      .select(`
+        slot_id,
+        product_id,
+        products (
+          product_name,
+          abbreviation,
+          current_price
+        )
+      `)
+      .order('slot_id');
+
+  if (slotError) {
+    throw slotError;
+  }
+
+  displaySlots = slotData;
+
+      console.log(displaySlots);
+}
     
     // === 3. 本番通信ロジック：GASから最新データを取得（修正版） ===
 function convertSalesData(rawSales) {
+
   return rawSales.map(sale => {
-    const items = Array(PRODUCT_MASTER.length).fill(0);
+
+    const items = {};
+
     let otherPrice = 0;
     let totalPrice = 0;
+
     sale.sale_items.forEach(item => {
+
       totalPrice += item.quantity * item.unit_price;
 
-      // その他商品
       if (item.product_id === 0) {
+
         otherPrice += item.unit_price;
+
       } else {
-        const index = item.product_id - 1;
-        if (index >= 0 && index < items.length) {
-          items[index] += item.quantity;
-        }
+
+        items[item.product_id] =
+          (items[item.product_id] || 0)
+          + item.quantity;
       }
     });
-    
+
     const soldDate = new Date(sale.sold_at);
+
     const timestamp =
       soldDate.getFullYear() + "/" +
       String(soldDate.getMonth() + 1).padStart(2, '0') + "/" +
       String(soldDate.getDate()).padStart(2, '0');
+
     return {
       timestamp,
       register: sale.registers.register_name,
@@ -187,7 +236,6 @@ function convertSalesData(rawSales) {
     };
   });
 }
-
     
     async function fetchSalesData() {
       console.log("Supabaseから売上データ取得開始");
@@ -273,25 +321,28 @@ function convertSalesData(rawSales) {
       thead.innerHTML = "";
 
       // 💡 A. 有効な（「-」以外の商品）インデックスを抽出する
-      const activeProductIndexes = [];
-      PRODUCT_MASTER.forEach((prod, index) => {
-        if (prod.name !== "-") {
-          activeProductIndexes.push(index);
-        }
-      });
+      const activeSlots =
+  displaySlots.filter(
+    slot => slot.product_id !== null
+  );
 
       // 💡 B. ヘッダー（thead）を動的に組み立て
       let thHtml = `<tr><th>日付</th>`;
-      activeProductIndexes.forEach(index => {
-        thHtml += `<th>${PRODUCT_MASTER[index].name}</th>`;
-      });
+      activeSlots.forEach(slot => {
+
+  const label =
+    slot.products.abbreviation ||
+    slot.products.product_name;
+
+  thHtml += `<th>${label}</th>`;
+});
       thHtml += `<th>その他</th>`;
       thHtml += `<th style="background-color: #ebf8ff; color: #2b6cb0;">合計</th></tr>`;
       thead.innerHTML = thHtml;
 
       // 💡 C. データ集計用の変数を初期化
       // activeProductIndexesの長さに合わせた集計用配列を用意する
-      const activeLength = activeProductIndexes.length;
+      const activeLength = activeSlots.length;
       let dailyData = Array.from({ length: 4 }, () => Array(activeLength + 1).fill(0)); // 商品群 + その他(最後尾)
       let verticalTotal = Array(activeLength + 1).fill(0);
       let verticalGrandTotalAmount = 0;
