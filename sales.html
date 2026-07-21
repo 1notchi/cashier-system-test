@@ -49,9 +49,6 @@
           <thead id="matrixTableHead">
           </thead>
           <tbody id="matrixTableBody">
-            <tr>
-              <td colspan="19" style="padding: 40px; color: #a0aec0;">データを読み込んでいます...</td>
-            </tr>
           </tbody>
         </table>
       </div>
@@ -96,7 +93,6 @@
     let currentViewMode = 'qty';      // 'qty', 'amount'
     let allSalesData = []; // Supabaseから取得した売上データ
 
-    let products = [];
     let displaySlots = [];
     let registers = [];
 
@@ -129,7 +125,7 @@
     ];*/
 
     // 集計対象とする2026年の学祭4日間の日付リスト
-    const TARGET_DATES = ["2026/11/20", "2026/11/21", "2026/11/22", "2026/11/23"];
+    let targetDates = [];
 
     function getTableColumnCount() {
       const activeSlots =
@@ -221,6 +217,24 @@
       registers = registerData;
 
       console.log(displaySlots);
+
+      const {
+  data: festivalDateData,
+  error: festivalDateError
+} = await mySupabase
+  .from('festival_dates')
+  .select('target_date')
+  .order('target_date');
+
+if (festivalDateError) {
+  throw festivalDateError;
+}
+
+targetDates =
+  festivalDateData.map(row =>
+    row.target_date.replaceAll('-', '/')
+  );
+      console.log('festival_dates', targetDates);
     }
 
     // === 3. 本番通信ロジック：GASから最新データを取得（修正版） ===
@@ -367,7 +381,7 @@
       // 💡 C. データ集計用の変数を初期化
       // activeProductIndexesの長さに合わせた集計用配列を用意する
       const activeLength = activeSlots.length;
-      let dailyData = Array.from({ length: TARGET_DATES.length }, () => Array(activeLength + 1).fill(0));
+      let dailyData = Array.from({ length: targetDates.length }, () => Array(activeLength + 1).fill(0));
       let verticalTotal = Array(activeLength + 1).fill(0);
       let verticalGrandTotalAmount = 0;
 
@@ -385,7 +399,7 @@
         }
 
         const dateStr = row.timestamp;
-        const dateIndex = TARGET_DATES.indexOf(dateStr);
+const dateIndex = targetDates.indexOf(dateStr);
 
         // 学祭の4日間に合致する場合のみ、各種集計を行う
         if (dateIndex !== -1) {
@@ -423,7 +437,7 @@
           totalAmount += row.totalPrice;
         }
 
-        // 今日のサマリーの集計（todayStr が TARGET_DATES に含まれていなくても集計したい場合はこの位置でOK）
+        // 今日のサマリーの集計
         if (dateStr === todayStr) {
           todayCount++;
           todayAmount += row.totalPrice;
@@ -431,8 +445,8 @@
       });
 
       // E. 対象日付のデータ行を出力
-      for (let d = 0; d < TARGET_DATES.length; d++) {
-        const displayDate = TARGET_DATES[d].substring(5);
+      for (let d = 0; d < targetDates.length;d++) {
+        const displayDate = targetDates[d].substring(5);
         let rowHtml = `<tr><td>${displayDate}</td>`;
         let rowHorizontalTotalAmount = 0;
 
