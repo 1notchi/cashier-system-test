@@ -61,8 +61,7 @@
 
       <div class="summary-card">
         <div class="card-title">📅 今日のサマリー <span style="font-size: 14px; font-weight: normal; color: #718096;"
-            id="txtTodayLabel">(
-            <?= Utilities.formatDate(new Date(), "JST", "MM/dd") ?>)
+            id="txtTodayLabel">(--/--)
           </span></div>
         <div class="card-row">
           <span class="card-label">会計回数</span>
@@ -95,10 +94,11 @@
     // === 1. 状態管理と定数の定義 ===
     let currentRegisterMode = 'all'; // 'all', 'NF', '北部祭', '移動販売'
     let currentViewMode = 'qty';      // 'qty', 'amount'
-   let allSalesData = []; // Supabaseから取得した売上データ
+    let allSalesData = []; // Supabaseから取得した売上データ
 
     let products = [];
     let displaySlots = [];
+    let registers = [];
 
     // Supabase接続用クライアント
     const mySupabase = window.supabase.createClient(
@@ -131,50 +131,65 @@
     // 集計対象とする2026年の学祭4日間の日付リスト
     const TARGET_DATES = ["2026/11/20", "2026/11/21", "2026/11/22", "2026/11/23"];
 
+    function getTableColumnCount() {
+      const activeSlots =
+        displaySlots.filter(
+          slot => slot.product_id !== null
+        );
+
+      return (
+        1 +                 // 日付
+        activeSlots.length +
+        1 +                 // その他
+        1                   // 合計
+      );
+    }
+
     // === 2. 画面起動時の処理 ===
     window.onload = async () => {
 
-  // ログイン確認
-  const {
-    data: { session }
-  } = await mySupabase.auth.getSession();
+      // ログイン確認
+      const {
+        data: { session }
+      } = await mySupabase.auth.getSession();
 
-  if (!session) {
-    location.href = "login.html";
-    return;
-  }
+      if (!session) {
+        location.href = "login.html";
+        return;
+      }
 
-  // 今日の日付表示
-  const now = new Date();
-  const mm = String(now.getMonth() + 1).padStart(2, '0');
-  const dd = String(now.getDate()).padStart(2, '0');
+      // 今日の日付表示
+      const now = new Date();
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const dd = String(now.getDate()).padStart(2, '0');
 
-  document.getElementById('txtTodayLabel').innerText =
-    `(${mm}/${dd})`;
+      document.getElementById('txtTodayLabel').innerText =
+        `(${mm}/${dd})`;
 
-  // 売上データ取得
-  await loadMasterData();
-await fetchSalesData();
+      // 売上データ取得
+      await loadMasterData();
+      renderRegisterButtons();
+      await fetchSalesData();
 
-};
+    };
 
     async function loadMasterData() {
 
-  const { data: productData, error: productError } =
-    await mySupabase
-      .from('products')
-      .select('*');
+      const { data: productData, error: productError } =
+        await mySupabase
+          .from('products')
+          .select('*');
 
-  if (productError) {
-    throw productError;
-  }
+      if (productError) {
+        throw productError;
+      }
 
-  products = productData;
+      products = productData;
 
-  const { data: slotData, error: slotError } =
-    await mySupabase
-      .from('display_slots')
-      .select(`
+      const { data: slotData, error: slotError } =
+        await mySupabase
+          .from('display_slots')
+          .select(`
         slot_id,
         product_id,
         products (
@@ -183,67 +198,76 @@ await fetchSalesData();
           current_price
         )
       `)
-      .order('slot_id');
+          .order('slot_id');
 
-  if (slotError) {
-    throw slotError;
-  }
+      if (slotError) {
+        throw slotError;
+      }
 
-  displaySlots = slotData;
+      displaySlots = slotData;
+
+      const {
+        data: registerData,
+        error: registerError
+      } = await mySupabase
+        .from('registers')
+        .select('*')
+        .order('register_id');
+
+      if (registerError) {
+        throw registerError;
+      }
+
+      registers = registerData;
 
       console.log(displaySlots);
-}
-    
+    }
+
     // === 3. 本番通信ロジック：GASから最新データを取得（修正版） ===
-function convertSalesData(rawSales) {
+    function convertSalesData(rawSales) {
 
-  return rawSales.map(sale => {
+      return rawSales.map(sale => {
 
-    const items = {};
+        const items = {};
 
-    let otherPrice = 0;
-    let totalPrice = 0;
+        let otherPrice = 0;
+        let totalPrice = 0;
 
-    sale.sale_items.forEach(item => {
+        sale.sale_items.forEach(item => {
 
-      totalPrice += item.quantity * item.unit_price;
+          totalPrice += item.quantity * item.unit_price;
 
-      if (item.product_id === 0) {
+          if (item.product_id === 0) {
 
-        otherPrice += item.unit_price;
+            otherPrice += item.unit_price;
 
-      } else {
+          } else {
 
-        items[item.product_id] =
-          (items[item.product_id] || 0)
-          + item.quantity;
-      }
-    });
+            items[item.product_id] =
+              (items[item.product_id] || 0)
+              + item.quantity;
+          }
+        });
 
-    const soldDate = new Date(sale.sold_at);
+        const timestamp = formatDateJST(sale.sold_at);
 
-    const timestamp =
-      soldDate.getFullYear() + "/" +
-      String(soldDate.getMonth() + 1).padStart(2, '0') + "/" +
-      String(soldDate.getDate()).padStart(2, '0');
+        return {
+          timestamp,
+          register: sale.registers.register_name,
+          items,
+          otherPrice,
+          totalPrice
+        };
+      });
+    }
 
-    return {
-      timestamp,
-      register: sale.registers.register_name,
-      items,
-      otherPrice,
-      totalPrice
-    };
-  });
-}
-    
     async function fetchSalesData() {
       console.log("Supabaseから売上データ取得開始");
       const tbody = document.getElementById('matrixTableBody');
       if (tbody) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="19"
+            <td colspan="${getTableColumnCount()}"
               style="padding:40px;color:#a0aec0;">
               🔄 データ取得中...
             </td>
@@ -251,45 +275,45 @@ function convertSalesData(rawSales) {
         `;
       }
 
-  const { data, error } =
-    await mySupabase
-      .from('sales')
-      .select(`
+      const { data, error } =
+        await mySupabase
+          .from('sales')
+          .select(`
         sale_id,
         register_id,
         sold_at,
         registers (register_name),
         sale_items (product_id, quantity, unit_price, other_product_name)
       `)
-      .order('sold_at');
+          .order('sold_at');
 
-  if (error) {
-    console.error(
-      "売上データ取得エラー:",
-      error
-    );
+      if (error) {
+        console.error(
+          "売上データ取得エラー:",
+          error
+        );
 
-    if (tbody) {
-      tbody.innerHTML = `
+        if (tbody) {
+          tbody.innerHTML = `
       <tr>
-        <td colspan="19"
+        <td colspan="${getTableColumnCount()}"
         style="padding:40px;color:#e53e3e;">
         ❌ データ取得失敗
         </td>
       </tr>
       `;
+        }
+        return;
+      }
+      console.log("取得データ:", data);
+      allSalesData = convertSalesData(data || []);
+      console.log(allSalesData);
+      renderMatrixTable();
+      const now = new Date();
+      document.getElementById('txtLastUpdate').innerText =
+        `最終更新: ${now.toLocaleTimeString('ja-JP')}`;
     }
-    return;
-  }
-  console.log("取得データ:", data);
-  allSalesData = convertSalesData(data || []);
-  console.log(allSalesData);
-  renderMatrixTable();
-  const now = new Date();
-  document.getElementById('txtLastUpdate').innerText =
-    `最終更新: ${now.toLocaleTimeString('ja-JP')}`;
-}
-    
+
     // === 4. UI操作イベント（切り替えボタン） ===
     function switchRegister(register, element) {
       document.querySelectorAll('.segment-btn').forEach(btn => btn.classList.remove('active'));
@@ -322,20 +346,20 @@ function convertSalesData(rawSales) {
 
       // 💡 A. 有効な（「-」以外の商品）インデックスを抽出する
       const activeSlots =
-  displaySlots.filter(
-    slot => slot.product_id !== null
-  );
+        displaySlots.filter(
+          slot => slot.product_id !== null
+        );
 
       // 💡 B. ヘッダー（thead）を動的に組み立て
       let thHtml = `<tr><th>日付</th>`;
       activeSlots.forEach(slot => {
 
-  const label =
-    slot.products.abbreviation ||
-    slot.products.product_name;
+        const label =
+          slot.products.abbreviation ||
+          slot.products.product_name;
 
-  thHtml += `<th>${label}</th>`;
-});
+        thHtml += `<th>${label}</th>`;
+      });
       thHtml += `<th>その他</th>`;
       thHtml += `<th style="background-color: #ebf8ff; color: #2b6cb0;">合計</th></tr>`;
       thead.innerHTML = thHtml;
@@ -343,7 +367,7 @@ function convertSalesData(rawSales) {
       // 💡 C. データ集計用の変数を初期化
       // activeProductIndexesの長さに合わせた集計用配列を用意する
       const activeLength = activeSlots.length;
-      let dailyData = Array.from({ length: TARGET_DATES.length },() => Array(activeLength + 1).fill(0));
+      let dailyData = Array.from({ length: TARGET_DATES.length }, () => Array(activeLength + 1).fill(0));
       let verticalTotal = Array(activeLength + 1).fill(0);
       let verticalGrandTotalAmount = 0;
 
@@ -352,14 +376,11 @@ function convertSalesData(rawSales) {
       let totalCount = 0;
       let totalAmount = 0;
 
-      const nowObj = new Date();
-      const todayStr = nowObj.getFullYear() + "/" +
-        String(nowObj.getMonth() + 1).padStart(2, '0') + "/" +
-        String(nowObj.getDate()).padStart(2, '0');
+      const todayStr = getTodayJST();
 
-      // 💡 D. スプレッドシートデータの集計処理
+      // D. データの集計処理
       allSalesData.forEach(row => {
-        if (currentRegisterMode !== 'all' && !row.register.includes(currentRegisterMode)) {
+        if (currentRegisterMode !== 'all' && row.register !== currentRegisterMode) {
           return;
         }
 
@@ -371,24 +392,24 @@ function convertSalesData(rawSales) {
           // 有効な商品列だけループを回し、集計先の配列へとマッピングしながら加算
           activeSlots.forEach((slot, i) => {
 
-  const productId = slot.product_id;
+            const productId = slot.product_id;
 
-  const qty =
-    row.items[productId] || 0;
+            const qty =
+              row.items[productId] || 0;
 
-  const price =
-    slot.products.current_price;
+            const price =
+              slot.products.current_price;
 
-  if (currentViewMode === 'qty') {
+            if (currentViewMode === 'qty') {
 
-    dailyData[dateIndex][i] += qty;
+              dailyData[dateIndex][i] += qty;
 
-  } else {
+            } else {
 
-    dailyData[dateIndex][i] +=
-      qty * price;
-  }
-});
+              dailyData[dateIndex][i] +=
+                qty * price;
+            }
+          });
           // 「その他」の集計（配列の最後尾に格納）
           const otherColIndex = activeLength;
           if (currentViewMode === 'qty') {
@@ -409,8 +430,8 @@ function convertSalesData(rawSales) {
         }
       });
 
-      // 💡 E. 4日分のデータ行をHTMLとして出力
-      for (let d = 0;d < TARGET_DATES.length; d++) {
+      // E. 対象日付のデータ行を出力
+      for (let d = 0; d < TARGET_DATES.length; d++) {
         const displayDate = TARGET_DATES[d].substring(5);
         let rowHtml = `<tr><td>${displayDate}</td>`;
         let rowHorizontalTotalAmount = 0;
@@ -423,7 +444,7 @@ function convertSalesData(rawSales) {
           rowHorizontalTotalAmount += val;
         }
 
-        // 合計列（18列目）を出力
+        // 合計列
         if (currentViewMode === 'amount') {
           rowHtml += `<td style="font-weight: bold; background-color: #f7fafc; color: #2b6cb0;">${rowHorizontalTotalAmount.toLocaleString()}</td>`;
           verticalGrandTotalAmount += rowHorizontalTotalAmount;
@@ -455,6 +476,68 @@ function convertSalesData(rawSales) {
       document.getElementById('lblTodayAmount').innerHTML = `${todayAmount.toLocaleString()}<span>円</span>`;
       document.getElementById('lblTotalCount').innerHTML = `${totalCount}<span>回</span>`;
       document.getElementById('lblTotalAmount').innerHTML = `${totalAmount.toLocaleString()}<span>円</span>`;
+    }
+
+    function renderRegisterButtons() {
+
+      const container =
+        document.querySelector(
+          '.segment-container'
+        );
+
+      let html = `
+    <button
+      class="segment-btn active"
+      onclick="switchRegister('all', this)">
+      すべてのレジ
+    </button>
+  `;
+
+      registers.forEach(register => {
+
+        html += `
+      <button
+        class="segment-btn"
+        onclick="switchRegister(
+          '${register.register_name}',
+          this
+        )">
+        ${register.register_name}
+      </button>
+    `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    function formatDateJST(dateString) {
+
+      const jstDate = new Date(
+        new Date(dateString)
+          .toLocaleString(
+            'en-US',
+            { timeZone: 'Asia/Tokyo' }
+          )
+      );
+
+      return (
+        jstDate.getFullYear() +
+        "/" +
+        String(jstDate.getMonth() + 1)
+          .padStart(2, '0') +
+        "/" +
+        String(jstDate.getDate())
+          .padStart(2, '0')
+      );
+    }
+
+    function getTodayJST() {
+
+      const now = new Date();
+
+      return formatDateJST(
+        now.toISOString()
+      );
     }
   </script>
 </body>
