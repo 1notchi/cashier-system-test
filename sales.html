@@ -343,7 +343,7 @@ function convertSalesData(rawSales) {
       // 💡 C. データ集計用の変数を初期化
       // activeProductIndexesの長さに合わせた集計用配列を用意する
       const activeLength = activeSlots.length;
-      let dailyData = Array.from({ length: 4 }, () => Array(activeLength + 1).fill(0)); // 商品群 + その他(最後尾)
+      let dailyData = Array.from({ length: TARGET_DATES.length },() => Array(activeLength + 1).fill(0));
       let verticalTotal = Array(activeLength + 1).fill(0);
       let verticalGrandTotalAmount = 0;
 
@@ -410,7 +410,7 @@ function convertSalesData(rawSales) {
       });
 
       // 💡 E. 4日分のデータ行をHTMLとして出力
-      for (let d = 0; d < 4; d++) {
+      for (let d = 0;d < TARGET_DATES.length; d++) {
         const displayDate = TARGET_DATES[d].substring(5);
         let rowHtml = `<tr><td>${displayDate}</td>`;
         let rowHorizontalTotalAmount = 0;
