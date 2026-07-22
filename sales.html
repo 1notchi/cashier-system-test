@@ -258,16 +258,13 @@
 
         sale.sale_items.forEach(item => {
 
-          if (visibleProductIds.has(item.product_id)) {
-            totalPrice +=
-              item.quantity * item.unit_price;
-          }
-
-          totalPrice += item.quantity * item.unit_price;
+          const amount =
+            item.quantity * item.unit_price;
 
           if (item.product_id === 0) {
 
-            otherPrice += item.unit_price;
+            otherPrice += amount;
+            totalPrice += amount;
 
           } else {
 
@@ -279,11 +276,13 @@
             }
 
             items[item.product_id].quantity += item.quantity;
-            items[item.product_id].amount += item.quantity * item.unit_price;
+            items[item.product_id].amount += amount;
+
+            if (visibleProductIds.has(item.product_id)) {
+              totalPrice += amount;
+            }
           }
         });
-
-        totalPrice += otherPrice;
 
         const timestamp = formatDateJST(sale.sold_at);
 
