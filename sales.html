@@ -72,7 +72,7 @@
 
       <div class="summary-card total-scope">
         <div class="card-title">🏆 期間中の総サマリー <span
-            style="font-size: 14px; font-weight: normal; color: #718096;">(学祭4日間通算)</span></div>
+            style="font-size: 14px; font-weight: normal; color: #718096;">(学祭期間通算)</span></div>
         <div class="card-row">
           <span class="card-label">総会計回数</span>
           <div class="card-value" id="lblTotalCount">0<span>回</span></div>
@@ -95,6 +95,8 @@
 
     let displaySlots = [];
     let registers = [];
+
+    let visibleProductIds = new Set();
 
     // Supabase接続用クライアント
     const mySupabase = window.supabase.createClient(
@@ -219,22 +221,29 @@
       console.log(displaySlots);
 
       const {
-  data: festivalDateData,
-  error: festivalDateError
-} = await mySupabase
-  .from('festival_dates')
-  .select('target_date')
-  .order('target_date');
+        data: festivalDateData,
+        error: festivalDateError
+      } = await mySupabase
+        .from('festival_dates')
+        .select('target_date')
+        .order('target_date');
 
-if (festivalDateError) {
-  throw festivalDateError;
-}
+      if (festivalDateError) {
+        throw festivalDateError;
+      }
 
-targetDates =
-  festivalDateData.map(row =>
-    row.target_date.replaceAll('-', '/')
-  );
-      console.log('festival_dates', targetDates);
+      targetDates =
+        festivalDateData.map(row =>
+          row.target_date.replaceAll('-', '/')
+        );
+      //console.log('festival_dates', targetDates);
+
+      visibleProductIds =
+        new Set(
+          displaySlots
+            .filter(slot => slot.product_id !== null)
+            .map(slot => slot.product_id)
+        );
     }
 
     // === 3. 本番通信ロジック：GASから最新データを取得（修正版） ===
@@ -249,6 +258,11 @@ targetDates =
 
         sale.sale_items.forEach(item => {
 
+          if (visibleProductIds.has(item.product_id)) {
+            totalPrice +=
+              item.quantity * item.unit_price;
+          }
+
           totalPrice += item.quantity * item.unit_price;
 
           if (item.product_id === 0) {
@@ -257,11 +271,19 @@ targetDates =
 
           } else {
 
-            items[item.product_id] =
-              (items[item.product_id] || 0)
-              + item.quantity;
+            if (!items[item.product_id]) {
+              items[item.product_id] = {
+                quantity: 0,
+                amount: 0
+              };
+            }
+
+            items[item.product_id].quantity += item.quantity;
+            items[item.product_id].amount += item.quantity * item.unit_price;
           }
         });
+
+        totalPrice += otherPrice;
 
         const timestamp = formatDateJST(sale.sold_at);
 
@@ -399,7 +421,7 @@ targetDates =
         }
 
         const dateStr = row.timestamp;
-const dateIndex = targetDates.indexOf(dateStr);
+        const dateIndex = targetDates.indexOf(dateStr);
 
         // 学祭の4日間に合致する場合のみ、各種集計を行う
         if (dateIndex !== -1) {
@@ -408,11 +430,14 @@ const dateIndex = targetDates.indexOf(dateStr);
 
             const productId = slot.product_id;
 
-            const qty =
-              row.items[productId] || 0;
+            const itemData =
+              row.items[productId];
 
-            const price =
-              slot.products.current_price;
+            const qty =
+              itemData?.quantity || 0;
+
+            const amount =
+              itemData?.amount || 0;
 
             if (currentViewMode === 'qty') {
 
@@ -420,8 +445,7 @@ const dateIndex = targetDates.indexOf(dateStr);
 
             } else {
 
-              dailyData[dateIndex][i] +=
-                qty * price;
+              dailyData[dateIndex][i] += amount;
             }
           });
           // 「その他」の集計（配列の最後尾に格納）
@@ -432,7 +456,7 @@ const dateIndex = targetDates.indexOf(dateStr);
             dailyData[dateIndex][otherColIndex] += row.otherPrice;
           }
 
-          // 💡 学祭期間中（4日間）のデータのみ、総サマリーに加算する
+          // 学祭期間中のデータのみ、総サマリーに加算する
           totalCount++;
           totalAmount += row.totalPrice;
         }
@@ -445,7 +469,7 @@ const dateIndex = targetDates.indexOf(dateStr);
       });
 
       // E. 対象日付のデータ行を出力
-      for (let d = 0; d < targetDates.length;d++) {
+      for (let d = 0; d < targetDates.length; d++) {
         const displayDate = targetDates[d].substring(5);
         let rowHtml = `<tr><td>${displayDate}</td>`;
         let rowHorizontalTotalAmount = 0;
