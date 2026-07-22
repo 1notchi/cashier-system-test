@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
   <title>学祭レジシステム - トップ</title>
-  <link rel="stylesheet" href="style_index.css">
+  <link rel="stylesheet" href="style_top.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
 </head>
@@ -21,7 +21,13 @@
     <a href="sales.html" class="btn btn-sales">売上確認へ</a>
   </div>
 
-  <button onclick="logout()">ログアウト</button>
+  <div class="logout-container">
+    <button
+      class="btn btn-logout"
+      onclick="logout()">
+      ログアウト
+    </button>
+  </div>
 
   <script>
     // Supabaseクライアント生成
