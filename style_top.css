@@ -25,7 +25,14 @@ h1 {
   text-decoration: none;
   color: white;
   border-radius: 8px;
+  border: none;
+  cursor: pointer;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: opacity 0.2s;
+}
+
+.btn:hover {
+  opacity: 0.9;
 }
 
 .btn-cashier {
@@ -34,4 +41,12 @@ h1 {
 
 .btn-sales {
   background-color: #28a745;
+}
+
+.logout-container {
+  margin-top: 40px;
+}
+
+.btn-logout {
+  background-color: #dc3545;
 }
