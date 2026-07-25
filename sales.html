@@ -86,7 +86,11 @@
 
   </main>
 
+  <!-- 共通ヘッダー -->
   <script src="header.js"></script>
+  <!-- mySupabase生成, ログイン認証 -->
+  <script src="auth.js"></script>
+  
   <script>
     // ========================================
     //     状態管理用のグローバル変数
@@ -111,24 +115,11 @@
     //形式: ["2026/11/19", "2026/11/20", ...]
     let targetDates = [];
 
-    // Supabase接続用クライアント
-    const mySupabase = window.supabase.createClient(
-      CONFIG.SUPABASE_URL,
-      CONFIG.SUPABASE_KEY
-    );
-
     // ========================================
     //     画面初期化処理
     // ========================================
 
     window.onload = async () => {
-
-      // ログイン確認
-      const { data: { session } } = await mySupabase.auth.getSession();
-      if (!session) {
-        location.href = "login.html";
-        return;
-      }
 
       // 今日の日付をサマリー欄に表示
       const now = new Date();
