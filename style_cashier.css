@@ -52,15 +52,17 @@
 
 /* 商品の箱（カード）単体の設定 */
 .item-card {
-background-color: #f0f4f8;
-border-radius: 8px;
-padding: 8px 12px;
-display: flex;
-flex-direction: column;
-justify-content: space-between;
-box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-text-align: center;
-height: 100%;
+  background-color: #f0f4f8;
+  border-radius: 8px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  text-align: center;
+  height: 100%;
+  user-select: none; /*選択を禁止*/
+  -webkit-user-select: none; /*選択を禁止*/
 }
 
 /* 箱の上部3/5を占めるクリックエリア */
