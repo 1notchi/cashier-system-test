@@ -1,15 +1,16 @@
 /* 全画面共通の基本設定 */
 body {
-font-family: sans-serif;
-background-color: #f4f7f6;
-margin: 0;
-box-sizing: border-box;
-height: 100vh;
-display: flex;
-flex-direction: column;
+    font-family: sans-serif;
+    background-color: #f4f7f6;
+    margin: 0;
+    box-sizing: border-box;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
 .page-content{
+    flex:1;
     padding:15px 30px 25px;
 }
 
@@ -18,5 +19,5 @@ flex-direction: column;
 *,
 *:before,
 *:after {
-box-sizing: border-box;
+    box-sizing: border-box;
 }
