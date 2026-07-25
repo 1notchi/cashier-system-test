@@ -10,7 +10,7 @@
 /* 外箱：3つのボタンを包むカプセル枠 */
 .toggle-container {
   display: inline-flex;
-  gap: 4px;
+  align-self: flex-start;
   background-color: #e2e8f0;
   padding: 3px;
   border-radius: 30px;
