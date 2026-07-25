@@ -1,7 +1,7 @@
 //タブ一覧
 const tabs = [
     { title: "トップ", href: "top.html" },
-    { title: "レジ", href: "register.html" },
+    { title: "レジ", href: "cashier.html" },
     { title: "売上確認", href: "sales.html" }
 ];
 
