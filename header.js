@@ -74,14 +74,7 @@ function createTabs() {
 }
 
 //ログアウト
-function logout() {
-
-    if (confirm("ログアウトしますか？")) {
-
-        // await supabase.auth.signOut();
-
-        location.href = "login.html";
-
-    }
-
+async function logout() {
+    await mySupabase.auth.signOut();
+    location.href = "login.html";
 }
