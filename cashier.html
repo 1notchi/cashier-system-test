@@ -85,7 +85,11 @@
     </div>
   </main>
 
+  <!-- 共通ヘッダー -->
   <script src="header.js"></script>
+  <!-- mySupabase生成, ログイン認証 -->
+  <script src="auth.js"></script>
+  
   <script>
 
     // ====================
@@ -112,12 +116,6 @@
       DISCOUNT_300: "item_16"
     };
 
-    // Supabase接続用クライアント
-    const mySupabase = window.supabase.createClient(
-      CONFIG.SUPABASE_URL,
-      CONFIG.SUPABASE_KEY
-    );
-
 
     // ====================
     //   ページ初期化
@@ -125,15 +123,6 @@
 
     // ページ初期化処理（ページのロード時に実行）
     window.onload = async () => {
-
-      // 未ログインの場合はログイン画面へ戻す
-      const {
-        data: { session }
-      } = await mySupabase.auth.getSession();
-      if (!session) {
-        location.href = "login.html";
-        return;
-      }
 
       // 商品情報・レジ情報を取得して画面を生成
       await loadDisplaySlots();
