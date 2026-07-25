@@ -4,52 +4,99 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>学祭レジシステム - ログイン</title>
+  <title>NFレジシステム_ログイン</title>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
 
   <style>
     body {
-      font-family: sans-serif;
-      background: #f7fafc;
+      margin: 0;
+      min-height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100vh;
-      margin: 0;
+      background: #f4f7f6;
+      font-family: sans-serif;
     }
 
     .login-box {
-      background: white;
+      width: 380px;
+      background: #fff;
       padding: 40px;
       border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0,0,0,.1);
-      width: 320px;
+      box-shadow: 0 4px 12px rgba(0,0,0,.08);
     }
 
-    h1 {
+    .login-logo {
       text-align: center;
-      margin-bottom: 24px;
+      margin-bottom: 28px;
+    }
+
+    .login-logo h1 {
+      margin: 0;
+      font-size: 28px;
+      color: #333;
+    }
+
+    .login-logo p {
+      margin-top: 8px;
+      color: #666;
+      font-size: 15px;
+    }
+
+    .input-group {
+      margin-bottom: 18px;
+    }
+
+    .input-group label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+      color: #555;
+      font-weight: bold;
     }
 
     input {
       width: 100%;
       box-sizing: border-box;
-      padding: 10px;
-      margin-bottom: 12px;
+      padding: 12px 14px;
+      border: 1px solid #cbd5e0;
+      border-radius: 8px;
+      font-size: 15px;
+      transition: .2s;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #3182ce;
+      box-shadow: 0 0 0 3px rgba(49,130,206,.15);
     }
 
     button {
       width: 100%;
-      padding: 12px;
+      margin-top: 10px;
+      padding: 13px;
+      border: none;
+      border-radius: 8px;
+      background: #3182ce;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
       cursor: pointer;
+      transition: .2s;
+    }
+
+    button:hover {
+      background: #2b6cb0;
     }
 
     .error {
-      color: red;
-      margin-top: 10px;
+      margin-top: 18px;
+      color: #dc3545;
       text-align: center;
+      font-size: 14px;
+      min-height: 20px;
     }
   </style>
 </head>
@@ -57,24 +104,35 @@
 <body>
 
   <div class="login-box">
-    <h1>学祭レジ</h1>
 
+  <div class="login-title">
+    <h1>NFレジ</h1>
+    <p>ログインしてください</p>
+  </div>
+
+  <div class="input-group">
+    <label for="email">メールアドレス</label>
     <input
       id="email"
       type="email"
-      placeholder="メールアドレス">
+      placeholder="example@example.com">
+  </div>
 
+  <div class="input-group">
+    <label for="password">パスワード</label>
     <input
       id="password"
       type="password"
       placeholder="パスワード">
-
-    <button onclick="login()">
-      ログイン
-    </button>
-
-    <div id="error" class="error"></div>
   </div>
+
+  <button onclick="login()">
+    ログイン
+  </button>
+
+  <div id="error" class="error"></div>
+
+</div>
 
   <script>
     const mySupabase = window.supabase.createClient(
@@ -83,29 +141,21 @@
     );
 
     window.onload = async () => {
-      const {
-        data: { session }
-      } = await mySupabase.auth.getSession();
-
+      const {data: { session }} = await mySupabase.auth.getSession();
       if (session) {
         location.href = "top.html";
       }
     };
 
     async function login() {
-
-      const email =
-        document.getElementById('email').value;
-
-      const password =
-        document.getElementById('password').value;
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
 
       const { error } =
         await mySupabase.auth.signInWithPassword({
           email,
           password
         });
-
       if (error) {
         document.getElementById('error').textContent =
           'ログインに失敗しました';
