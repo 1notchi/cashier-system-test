@@ -146,6 +146,15 @@ color: #333;
 color: #dc3545;
 }
 
+/* --- 下部会計エリア全体の枠組み --- */
+.footer-area {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 15px;
+  flex-shrink: 0;
+}
+
 /* 「リセット」ボタン */
 .btn-reset {
   width: 120px;
@@ -185,15 +194,6 @@ color: #dc3545;
 
 .btn-gacha-loop:active {
   background-color: #1d4ed8; /* タップした瞬間は濃い青に */
-}
-
-/* --- 下部会計エリア全体の枠組み --- */
-.footer-area {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 15px;
-  flex-shrink: 0;
 }
 
 /* --- 「その他」自由入力エリアのデザイン（高さを白いバーに統合） --- */
