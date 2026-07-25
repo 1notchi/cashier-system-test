@@ -476,7 +476,6 @@ pointer-events: none;
 
 /* メッセージを表示するときに付与するクラス */
 .toast-message.show {
-top: 30px;
-/* 画面上部から30pxの位置にスライドイン */
-opacity: 1;
+  top: 30px; /* 画面上部から30pxの位置にスライドイン */
+  opacity: 1;
 }
