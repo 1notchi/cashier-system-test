@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ja">
-  
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,85 +16,88 @@
 
   <main class="page-content">
 
-  <div class="toggle-container" id="registerButtons"></div>
+    <div class="cashier-container">
 
-  <div class="grid-container" id="gridContainer"></div>
+      <div class="toggle-container" id="registerButtons"></div>
 
-  <div class="footer-area">
-    <button class="btn-reset" onclick="resetApp()">リセット</button>
-    <button class="btn-gacha-loop" onclick="triggerGachaLoop()">マスガチャループ</button>
+      <div class="grid-container" id="gridContainer"></div>
 
-    <div class="other-item-container">
-      <span class="other-label">その他:</span>
-      <input type="text" class="input-other-name" id="inputOtherName" placeholder="商品名を入力" maxlength="20">
-      <input type="number" class="input-other-price" id="inputOtherPrice" oninput="validateOtherPrice()"
-        placeholder="0">
-      <span class="other-unit">円</span>
-    </div>
+      <div class="footer-area">
+        <button class="btn-reset" onclick="resetApp()">リセット</button>
+        <button class="btn-gacha-loop" onclick="triggerGachaLoop()">マスガチャループ</button>
 
-    <div class="footer-bar">
-      <div class="footer-right">
-        <div class="total-price-container">
-          <span class="total-price-label">合計金額</span>
-          <span class="total-price-amount">0円</span>
+        <div class="other-item-container">
+          <span class="other-label">その他:</span>
+          <input type="text" class="input-other-name" id="inputOtherName" placeholder="商品名を入力" maxlength="20">
+          <input type="number" class="input-other-price" id="inputOtherPrice" oninput="validateOtherPrice()"
+            placeholder="0">
+          <span class="other-unit">円</span>
         </div>
-        <button class="btn-checkout" onclick="openModal()">会計</button>
-      </div>
-    </div>
-  </div>
 
-  <div class="modal-overlay" id="checkoutModal">
-    <div class="modal-window">
-      <p class="modal-title">💰 会計確認</p>
-
-      <div class="modal-calc-row" style="color: #4a5568; font-size: 16px; margin-bottom: -5px;">
-        <span>担当レジ</span>
-        <span id="modalRegisterType" style="color: #333333; font-weight: bold;">--レジ</span>
-      </div>
-
-      <div class="modal-receipt-area" id="modalReceiptList"></div>
-
-      <div class="modal-calc-row">
-        <span>合計金額</span>
-        <span id="modalTotalAmount">0円</span>
-      </div>
-
-      <div class="modal-calc-row">
-        <span>お預かり</span>
-        <div>
-          <input type="number" class="input-money" id="inputDeposit" oninput="calcChange()"
-            onkeydown="blockInvalidKeys(event)" placeholder="0"> 円
+        <div class="footer-bar">
+          <div class="footer-right">
+            <div class="total-price-container">
+              <span class="total-price-label">合計金額</span>
+              <span class="total-price-amount">0円</span>
+            </div>
+            <button class="btn-checkout" onclick="openModal()">会計</button>
+          </div>
         </div>
       </div>
 
-      <div class="modal-calc-row" style="border-top: 2px dashed #e2e8f0; padding-top: 15px;">
-        <span>お釣り</span>
-        <span class="change-amount" id="modalChangeAmount">0円</span>
+      <div class="modal-overlay" id="checkoutModal">
+        <div class="modal-window">
+          <p class="modal-title">💰 会計確認</p>
+
+          <div class="modal-calc-row" style="color: #4a5568; font-size: 16px; margin-bottom: -5px;">
+            <span>担当レジ</span>
+            <span id="modalRegisterType" style="color: #333333; font-weight: bold;">--レジ</span>
+          </div>
+
+          <div class="modal-receipt-area" id="modalReceiptList"></div>
+
+          <div class="modal-calc-row">
+            <span>合計金額</span>
+            <span id="modalTotalAmount">0円</span>
+          </div>
+
+          <div class="modal-calc-row">
+            <span>お預かり</span>
+            <div>
+              <input type="number" class="input-money" id="inputDeposit" oninput="calcChange()"
+                onkeydown="blockInvalidKeys(event)" placeholder="0"> 円
+            </div>
+          </div>
+
+          <div class="modal-calc-row" style="border-top: 2px dashed #e2e8f0; padding-top: 15px;">
+            <span>お釣り</span>
+            <span class="change-amount" id="modalChangeAmount">0円</span>
+          </div>
+
+          <div class="modal-actions">
+            <button class="btn-modal-cancel" onclick="closeModal()">戻る</button>
+            <button class="btn-modal-confirm" id="btnConfirmPayment" onclick="submitPayment()">会計を確定</button>
+          </div>
+        </div>
       </div>
 
-      <div class="modal-actions">
-        <button class="btn-modal-cancel" onclick="closeModal()">戻る</button>
-        <button class="btn-modal-confirm" id="btnConfirmPayment" onclick="submitPayment()">会計を確定</button>
-      </div>
+      <div id="toastMessage" class="toast-message">お会計が完了しました！</div>
     </div>
-  </div>
-
-  <div id="toastMessage" class="toast-message">お会計が完了しました！</div>
   </main>
 
   <script src="header.js"></script>
   <script>
-    
+
     // ====================
     //   グローバル変数
     // ====================
-    
+
     // レジ画面に表示する商品情報（display_slotsテーブルから読み込み）
     let ITEM_MASTER = {};
 
     // 利用可能なレジ一覧（registersテーブルから読み込み）
     let registers = [];
-    
+
     // 現在選択中のレジID
     let currentRegisterId = null;
 
@@ -115,7 +118,7 @@
       CONFIG.SUPABASE_KEY
     );
 
-    
+
     // ====================
     //   ページ初期化
     // ====================
@@ -139,7 +142,7 @@
       initApp();
     };
 
-    
+
     // ====================
     //   データ取得
     // ====================
@@ -207,7 +210,7 @@
       currentRegisterId = registers[0].register_id;
     }
 
-    
+
     // ==============
     //   画面生成
     // ==============
@@ -272,7 +275,7 @@
       });
     }
 
-    
+
     // ==================
     //   レジ切り替え
     // ==================
@@ -289,7 +292,7 @@
       });
     }
 
-    
+
     // ==============
     //   商品操作
     // ==============
@@ -404,7 +407,7 @@
       updateTotal();
     }
 
-    
+
     // ====================
     //   集計・金額計算
     // ====================
@@ -541,7 +544,7 @@
       currentTotal = total;
     }
 
-    
+
     // ====================
     //   会計モーダル
     // ====================
@@ -711,7 +714,7 @@
       }
     }
 
-    
+
     // ================
     //   売上登録
     // ================
