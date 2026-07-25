@@ -1,5 +1,12 @@
 /* --- レジ画面用のデザイン --- */
 
+.cashier-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+}
+
 /* 外箱：3つのボタンを包むカプセル枠 */
 .toggle-container {
   display: inline-flex;
@@ -35,12 +42,12 @@
 
 /* 16個の箱を4×4で綺麗に並べる枠組み */
 .grid-container {
-display: grid;
-grid-template-columns: repeat(4, 1fr);
-grid-template-rows: repeat(4, 1fr);
-gap: 12px;
-margin-top: 5px;
-flex-grow: 1;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  gap: 12px;
+  margin-top: 5px;
+  flex: 1;
 }
 
 /* 商品の箱（カード）単体の設定 */
