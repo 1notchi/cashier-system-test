@@ -15,6 +15,8 @@
   padding: 3px;
   border-radius: 30px;
   box-shadow: inset 0 1px 3px rgba(0,0,0,.1);
+  user-select: none; /*選択を禁止*/
+  -webkit-user-select: none; /*選択を禁止*/
 }
 
 /* 3つのボタン共通のスタイル */
@@ -288,25 +290,27 @@ color: #dc3545;
 
 /* 右側の「会計」ボタン */
 .btn-checkout {
-width: 180px;
-padding: 12px 0;
-font-size: 22px;
-font-weight: bold;
-color: white;
-background-color: #ffc107;
-border: none;
-border-radius: 6px;
-cursor: pointer;
-box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  width: 180px;
+  padding: 12px 0;
+  font-size: 22px;
+  font-weight: bold;
+  color: white;
+  background-color: #ffc107;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  user-select: none; /*選択を禁止*/
+  -webkit-user-select: none; /*選択を禁止*/
 }
 
 .btn-checkout:active {
-background-color: #e0a800;
+  background-color: #e0a800;
 }
 
 
 /* ==========================================
-✨ 【新設】会計確認ポップアップ（モーダル）
+✨ 会計確認ポップアップ（モーダル）
 ========================================== */
 
 /* 画面全体を覆ってロックする「半透明の黒い遮断幕」 */
