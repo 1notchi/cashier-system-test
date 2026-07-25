@@ -34,10 +34,7 @@ async function loadHeader() {
     }
 
     const html = await response.text();
-    document.body.insertAdjacentHTML(
-        "afterbegin",
-        html
-    );
+    document.body.insertAdjacentHTML("afterbegin", html);
 }
 
 //初期化
