@@ -2,11 +2,12 @@
 
 /* 外箱：3つのボタンを包むカプセル枠 */
 .toggle-container {
-display: flex;
-background-color: #e2e8f0;
-padding: 3px;
-border-radius: 30px;
-box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+    display: inline-flex;
+    gap: 4px;
+    background-color: #e2e8f0;
+    padding: 3px;
+    border-radius: 30px;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,.1);
 }
 
 /* 3つのボタン共通のスタイル */
