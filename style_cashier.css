@@ -1,12 +1,5 @@
 /* --- レジ画面用のデザイン --- */
 
-/* ヘッダー左側の要素（タイトルとボタン）を横並びにする */
-.header-left {
-display: flex;
-align-items: center;
-gap: 20px; /* タイトルとボタンの間のすき間 */
-}
-
 /* 外箱：3つのボタンを包むカプセル枠 */
 .toggle-container {
 display: flex;
