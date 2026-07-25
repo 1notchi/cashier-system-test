@@ -9,7 +9,6 @@ overflow-y: auto !important; /* 縦スクロールバーを正常化 */
 .sales-container {
 max-width: 1400px;
 margin: 0 auto;
-padding: 8px 20px 0 20px; /* 💡 デフォルト（画面が狭いとき）は上に詰める */
 font-family: 'Helvetica Neue', Arial, sans-serif;
 box-sizing: border-box;
 transition: padding 0.2s ease; /* 余白の変化を滑らかに */
