@@ -146,53 +146,57 @@ color: #333;
 color: #dc3545;
 }
 
-/* --- 下部会計エリア全体の枠組み --- */
-.footer-area {
-display: flex;
-justify-content: space-between;
-align-items: center;
-margin-top: 15px;
-flex-shrink: 0;
-}
-
-/* 単独独立した「リセット」ボタン */
+/* 「リセット」ボタン */
 .btn-reset {
-width: 120px;
-padding: 12px 0;
-font-size: 16px;
-font-weight: bold;
-color: #333;
-background-color: #e0e0e0;
-border: none;
-border-radius: 6px;
-cursor: pointer;
-box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  width: 120px;
+  padding: 12px 0;
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+  background-color: #e0e0e0;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  user-select: none; /*選択を禁止*/
+  -webkit-user-select: none; /*選択を禁止*/
 }
 
 .btn-reset:active {
-background-color: #c8c8c8;
+  background-color: #c8c8c8;
 }
 
 .btn-gacha-loop {
-width: 160px; /* 文字数に合わせて少し広めに確保 */
-padding: 12px 0;
-font-size: 15px;
-font-weight: bold;
-color: white;
-background-color: #3b82f6; /* 画面に調和するスマートな青色 */
-border: none;
-border-radius: 6px;
-cursor: pointer;
-box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-margin-left: 12px; /* リセットボタンとの間隔 */
-transition: background-color 0.1s;
+  width: 160px; /* 文字数に合わせて少し広めに確保 */
+  padding: 12px 0;
+  font-size: 15px;
+  font-weight: bold;
+  color: white;
+  background-color: #3b82f6; /* 画面に調和するスマートな青色 */
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-left: 12px; /* リセットボタンとの間隔 */
+  transition: background-color 0.1s;
+  user-select: none; /*選択を禁止*/
+  -webkit-user-select: none; /*選択を禁止*/
 }
 
 .btn-gacha-loop:active {
-background-color: #1d4ed8; /* タップした瞬間は濃い青に */
+  background-color: #1d4ed8; /* タップした瞬間は濃い青に */
 }
 
-/* --- 【アップデート】「その他」自由入力エリアのデザイン（高さを白いバーに統合） --- */
+/* --- 下部会計エリア全体の枠組み --- */
+.footer-area {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 15px;
+  flex-shrink: 0;
+}
+
+/* --- 「その他」自由入力エリアのデザイン（高さを白いバーに統合） --- */
 .other-item-container {
 display: flex;
 align-items: center;
