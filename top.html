@@ -34,8 +34,11 @@
 
   </main>
 
+  <!-- 共通ヘッダー -->
   <script src="header.js"></script>
+  <!-- mySupabase生成, ログイン認証 -->
   <script src="auth.js"></script>
+  
   <script>
     async function logout() {
       await mySupabase.auth.signOut();
