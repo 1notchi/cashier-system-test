@@ -1,5 +1,5 @@
 // ==========================
-// タブ一覧
+//   タブ一覧
 // ==========================
 
 const tabs = [
@@ -8,8 +8,23 @@ const tabs = [
   {title: "売上確認", href: "sales.html"}
 ];
 
+
 // ==========================
-// タブ生成
+//    初期化
+// ==========================
+
+function initializeHeader() {
+
+    createTabs();
+
+    document
+        .getElementById("logoutButton")
+        .addEventListener("click", logout);
+
+}
+
+// ==========================
+//   タブ生成
 // ==========================
 
 const navTabs = document.getElementById("navTabs");
@@ -31,7 +46,7 @@ tabs.forEach(tab => {
 });
 
 // ==========================
-// ログアウト
+//   ログアウト
 // ==========================
 
 document.getElementById("logoutButton").addEventListener("click", () => {
