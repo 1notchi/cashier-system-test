@@ -2,7 +2,8 @@
 const tabs = [
     { title: "トップ", href: "top.html" },
     { title: "レジ", href: "cashier.html" },
-    { title: "売上確認", href: "sales.html" }
+    { title: "売上確認", href: "sales.html" },
+    { title: "会計履歴", href: "history.html" }
 ];
 
 //ページ読み込み後にヘッダーを初期化
