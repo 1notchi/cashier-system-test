@@ -96,7 +96,7 @@
     //   グローバル変数
     // ====================
 
-    // レジ画面に表示する商品情報（display_slotsテーブルから読み込み）
+    // レジ画面に表示する商品情報（festival_productsテーブルから読み込み）
     let ITEM_MASTER = {};
 
     // 利用可能なレジ一覧（registersテーブルから読み込み）
@@ -139,18 +139,20 @@
     //display_slotsテーブルから表示商品の設定を取得し、ITEM_MASTERを構築する
     async function loadDisplaySlots() {
 
+      // settings取得
+      const { data: settingsData } = await mySupabase
+        .from("settings")
+        .select("current_festival_id")
+        .single();
+
       const { data, error } =
         await mySupabase
-          .from('display_slots')
-          .select(`
-        slot_id,
-        product_id,
-        products (
-          product_name,
-          current_price
-        )
-      `)
+          .from("festival_products")
+          .eq("festival_id", settingsData.current_festival_id)
+          .order("display_order")
+          .select(`display_order, product_id, price, products(product_name)`)
           .order('slot_id');
+      
       if (error) {
         console.error(error);
         return;
@@ -160,11 +162,11 @@
 
       data.forEach(row => {
 
-        // slot_id → item_01, item_02 ... の形式へ変換
-        const itemId = `item_${String(row.slot_id).padStart(2, '0')}`;
+        // display_order → item_01, item_02 ... の形式へ変換
+        const itemId = `item_${String(row.display_order).padStart(2,'0')}`;
 
         // 商品未設定スロットは空欄として登録
-        if (!row.products) {
+        if (row.product_id === null) {
           ITEM_MASTER[itemId] = {
             productId: null,
             name: "",
@@ -176,7 +178,7 @@
         ITEM_MASTER[itemId] = {
           productId: row.product_id,
           name: row.products.product_name,
-          price: row.products.current_price
+          price: row.price
         };
       });
     }
