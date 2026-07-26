@@ -140,19 +140,22 @@
     async function loadDisplaySlots() {
 
       // settings取得
-      const { data: settingsData } = await mySupabase
+      const { data: settingsData, error: settingsError } = await mySupabase
         .from("settings")
         .select("current_festival_id")
         .single();
 
-      const { data, error } =
-        await mySupabase
-          .from("festival_products")
-          .eq("festival_id", settingsData.current_festival_id)
-          .order("display_order")
-          .select(`display_order, product_id, price, products(product_name)`)
-          .order('slot_id');
-      
+      if (settingsError) {
+        console.error(settingsError);
+        return;
+      }
+
+      const { data, error } = await mySupabase
+        .from("festival_products")
+        .select(`display_order, product_id, price, products (product_name)`)
+        .eq("festival_id", settingsData.current_festival_id)
+        .order("display_order");
+
       if (error) {
         console.error(error);
         return;
