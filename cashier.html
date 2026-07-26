@@ -125,7 +125,7 @@
     window.onload = async () => {
 
       // 商品情報・レジ情報を取得して画面を生成
-      await loadDisplaySlots();
+      await loadFestivalProducts();
       await loadRegisters();
       createRegisterButtons();
       initApp();
@@ -137,7 +137,7 @@
     // ====================
 
     // festival_productsテーブルから表示商品の設定を取得し、ITEM_MASTERを構築する
-    async function loadDisplaySlots() {
+    async function loadFestivalProducts() {
 
       // settings取得
       const { data: settingsData, error: settingsError } = await mySupabase
