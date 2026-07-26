@@ -136,7 +136,7 @@
     //   データ取得
     // ====================
 
-    //display_slotsテーブルから表示商品の設定を取得し、ITEM_MASTERを構築する
+    // festival_productsテーブルから表示商品の設定を取得し、ITEM_MASTERを構築する
     async function loadDisplaySlots() {
 
       // settings取得
@@ -150,6 +150,7 @@
         return;
       }
 
+      // festival_productsから商品情報を取得
       const { data, error } = await mySupabase
         .from("festival_products")
         .select(`display_order, product_id, price, products (product_name)`)
