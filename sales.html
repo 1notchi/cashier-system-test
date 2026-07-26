@@ -185,21 +185,29 @@
 
       registers = registerData;
 
-      console.log(displaySlots);
+      // 設定を取得
+      const {data: settingsData, error: settingsError}
+        = await mySupabase
+        .from('settings')
+        .select('current_festival_id')
+        .single();
+
+      if (settingsError) {
+        throw settingsError;
+      }
 
       // 学祭期間の日付一覧を取得
-      const {
-        data: festivalDateData,
-        error: festivalDateError
-      } = await mySupabase
+      const {data: festivalDateData, error: festivalDateError}
+        = await mySupabase
         .from('festival_dates')
         .select('target_date')
+        .eq('festival_id', settingsData.current_festival_id)
         .order('target_date');
-
+      
       if (festivalDateError) {
         throw festivalDateError;
       }
-
+      
       targetDates = festivalDateData.map(row => row.target_date.replaceAll('-', '/'));
     }
 
