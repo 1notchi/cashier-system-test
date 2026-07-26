@@ -106,7 +106,7 @@
     let allSalesData = [];
 
     // display_slotsテーブルの内容. 売上表に表示する商品構成を保持する
-    let displaySlots = [];
+    let festivalProducts = [];
 
     // registers テーブルの内容. レジ切り替えボタンの生成に使用する
     let registers = [];
@@ -144,31 +144,35 @@
     // ==================================================
 
     //売上画面で使用する各種マスターデータを取得する
-    //取得対象:display_slots（表示対象商品）, registers（レジ一覧）, festival_dates（集計対象日）
+    //取得対象:festival_products（表示対象商品）, registers（レジ一覧）, festival_dates（集計対象日）
     async function loadMasterData() {
 
-      // display_slots と紐付く products 情報を取得
+     // 設定を取得
+      const {data: settingsData, error: settingsError}
+        = await mySupabase
+        .from('settings')
+        .select('current_festival_id')
+        .single();
+
+      if (settingsError) {
+        throw settingsError;
+      }
+      
+      // 現在の学祭の商品一覧を取得
       const {
         data: slotData,
         error: slotError
       } = await mySupabase
-        .from('display_slots')
-        .select(`
-        slot_id,
-        product_id,
-        products (
-          product_name,
-          abbreviation,
-          current_price
-        )
-      `)
-        .order('slot_id');
+        .from('festival_products')
+        .select(`festival_product_id, display_order, product_id, products (product_name,abbreviation)`)
+        .eq('festival_id', settingsData.current_festival_id)
+        .order('display_order');
 
       if (slotError) {
         throw slotError;
       }
 
-      displaySlots = slotData;
+      festivalProducts = slotData;
 
       // レジ一覧を取得
       const {
@@ -184,17 +188,6 @@
       }
 
       registers = registerData;
-
-      // 設定を取得
-      const {data: settingsData, error: settingsError}
-        = await mySupabase
-        .from('settings')
-        .select('current_festival_id')
-        .single();
-
-      if (settingsError) {
-        throw settingsError;
-      }
 
       // 学祭期間の日付一覧を取得
       const {data: festivalDateData, error: festivalDateError}
@@ -388,7 +381,7 @@
       thead.innerHTML = "";
 
       // display_slots に登録されている商品だけを表示対象とする
-      const activeSlots = displaySlots.filter(slot => slot.product_id !== null);
+      const activeSlots = festivalProducts.filter(slot => slot.product_id !== null);
 
       // --------------------------
       //   B. テーブルヘッダー生成
@@ -530,10 +523,7 @@
     // ================================================
 
     function getTableColumnCount() {
-      const activeSlots =
-        displaySlots.filter(
-          slot => slot.product_id !== null
-        );
+      const activeSlots = festivalProducts.filter(slot => slot.product_id !== null);
 
       return (
         1 +                 // 日付
