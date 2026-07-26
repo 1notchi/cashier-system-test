@@ -123,7 +123,6 @@
 
     // ページ初期化処理（ページのロード時に実行）
     window.onload = async () => {
-
       // 商品情報・レジ情報を取得して画面を生成
       await loadFestivalProducts();
       await loadRegisters();
@@ -728,15 +727,18 @@
       const otherName = document.getElementById('inputOtherName').value.trim();
 
       try {
+        // ログイン中のユーザーを取得
+        const {data: { user }, error: userError} = await mySupabase.auth.getUser();
+        if (userError || !user) {
+          throw new Error("ログインユーザーを取得できません。");
+        }
+        const userId = user.id;
+        
         // 売上ヘッダ（salesテーブル）を作成し、発行された sale_id を取得する
         const { data: saleData, error: saleError } =
           await mySupabase
             .from('sales')
-            .insert([
-              {
-                register_id: currentRegisterId
-              }
-            ])
+            .insert([{register_id: currentRegisterId, user_id: userId}])
             .select()
             .single();
 
@@ -759,12 +761,13 @@
           // 未設定スロットは登録しない
           if (!item?.productId) return;
 
-          saleItems.push({
+          ssaleItems.push({
             sale_id: saleData.sale_id,
             product_id: item.productId,
             quantity,
             unit_price: item.price,
-            other_product_name: null
+            other_product_name: null,
+            created_by: userId
           });
         });
 
@@ -775,7 +778,8 @@
             product_id: 0,
             quantity: 1,
             unit_price: otherPrice,
-            other_product_name: otherName || null
+            other_product_name: otherName || null,
+            created_by: userId
           });
         }
 
