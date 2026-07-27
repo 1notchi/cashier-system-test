@@ -1,1 +1,92 @@
+/* === history.html 固有の拡張スタイリング === */
+.history-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  box-sizing: border-box;
+  padding-top: 24px;
+}
 
+/* テーブルの横スクロール対応 */
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background-color: white;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+/* 会計履歴テーブル本体 */
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: center;
+  font-size: 14px;
+  white-space: nowrap;
+}
+.history-table th,
+.history-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #e2e8f0;
+  border-right: 1px solid #e2e8f0;
+}
+.history-table th {
+  background-color: #f7fafc;
+  color: #4a5568;
+  font-weight: bold;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+/* 通し番号列(先頭列)を固定表示 */
+.history-table th:first-child,
+.history-table td:first-child {
+  font-weight: bold;
+  background-color: #f7fafc;
+  color: #2d3748;
+  position: sticky;
+  left: 0;
+  z-index: 1;
+}
+.history-table th:first-child {
+  z-index: 3; /* 見出しの先頭セルは最前面 */
+}
+
+/* 行ホバー時のハイライト */
+.history-table tbody tr:hover {
+  background-color: #edf2f7 !important;
+}
+
+/* 操作列(最終列)は横幅を詰めて中央寄せ */
+.history-table td:last-child {
+  white-space: nowrap;
+}
+
+/* 編集・削除ボタン */
+.edit-button,
+.delete-button {
+  border: none;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: bold;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin: 0 3px;
+}
+.edit-button {
+  background-color: #ebf8ff;
+  color: #2b6cb0;
+}
+.edit-button:hover {
+  background-color: #bee3f8;
+}
+.delete-button {
+  background-color: #fff5f5;
+  color: #c53030;
+}
+.delete-button:hover {
+  background-color: #fed7d7;
+}
