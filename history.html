@@ -18,18 +18,18 @@
   <h1>NFレジシステム 会計履歴</h1>
 
   <table class="history-table">
-    <thead>
-      <tr>
-        <th>No.</th>
-        <th>レジ</th>
-        <th>ユーザー</th>
-        <th>会計時刻</th>
-      </tr>
-    </thead>
-    <tbody id="historyTableBody">
-      <!-- ここにJSで行を追加します -->
-    </tbody>
-  </table>
+  <thead>
+    <tr id="historyTableHeaderRow">
+      <th>No.</th>
+      <th>レジ</th>
+      <th>ユーザー</th>
+      <th>会計時刻</th>
+      <!-- ここに商品列(abbreviation)をJSで追加します -->
+    </tr>
+  </thead>
+  <tbody id="historyTableBody">
+  </tbody>
+</table>
 </main>
 
   <!-- 共通ヘッダー -->
@@ -43,69 +43,136 @@
     });
 
     async function loadHistory() {
-      // 1. 現在開催中のfestival_idを取得
-      const { data: settingsData, error: settingsError } = await mySupabase
-        .from("settings")
-        .select("current_festival_id")
-        .single();
+  // 1. 現在開催中のfestival_idを取得
+  const { data: settingsData, error: settingsError } = await mySupabase
+    .from("settings")
+    .select("current_festival_id")
+    .single();
 
-      if (settingsError) {
-        console.error(settingsError);
-        alert("開催情報の取得に失敗しました。");
-        return;
-      }
+  if (settingsError) {
+    console.error(settingsError);
+    alert("開催情報の取得に失敗しました。");
+    return;
+  }
 
-      const festivalId = settingsData.current_festival_id;
+  const festivalId = settingsData.current_festival_id;
 
-      // 2. 該当festivalの開催日一覧(target_date)を取得
-     const { data: datesData, error: datesError } = await mySupabase
-        .from("festival_dates")
-        .select("target_date")
-        .eq("festival_id", festivalId);
+  // 2. 該当festivalの開催日一覧(target_date)を取得
+  const { data: datesData, error: datesError } = await mySupabase
+    .from("festival_dates")
+    .select("target_date")
+    .eq("festival_id", festivalId);
 
-      if (datesError) {
-        console.error(datesError);
-        alert("開催日情報の取得に失敗しました。");
-        return;
-      }
+  if (datesError) {
+    console.error(datesError);
+    alert("開催日情報の取得に失敗しました。");
+    return;
+  }
 
-      if (!datesData || datesData.length === 0) {
-        console.warn("開催日が設定されていません。");
-        return;
-      }
+  if (!datesData || datesData.length === 0) {
+    console.warn("開催日が設定されていません。");
+    return;
+  }
 
-      // 3. 各開催日について「0:00〜翌日0:00」の範囲条件をつくる
-      const dateFilters = datesData.map(row => {
-        const start = row.target_date; // 例: "2026-07-27"
-        const startDate = new Date(start);
-        const endDate = new Date(startDate);
-        endDate.setDate(endDate.getDate() + 1);
-        const end = endDate.toISOString().slice(0, 10); // 翌日の日付
+  // 3. 商品列(festival_products × products)を取得
+  const { data: festivalProductsData, error: fpError } = await mySupabase
+    .from("festival_products")
+    .select(`
+      product_id,
+      display_order,
+      products ( abbreviation )
+    `)
+    .eq("festival_id", festivalId)
+    .order("display_order", { ascending: true });
 
-        return `and(sold_at.gte.${start},sold_at.lt.${end})`;
-      });
-      const orFilter = dateFilters.join(",");
+  if (fpError) {
+    console.error(fpError);
+    alert("商品情報の取得に失敗しました。");
+    return;
+  }
 
-      // 4. salesを取得(レジ名・ユーザー名も一緒に結合して取得)
-      const { data: salesData, error: salesError } = await mySupabase
-        .from("sales")
-        .select(`sale_id, sold_at, registers ( register_name ), profiles!sales_user_id_fkey ( display_name )`)
-        .eq("is_deleted", false)
-        .or(orFilter)
-        .order("sold_at", { ascending: true });
+  // 4. 開催日の範囲条件をつくる
+  const dateFilters = datesData.map(row => {
+    const start = row.target_date;
+    const startDate = new Date(start);
+    const endDate = new Date(startDate);
+    endDate.setDate(endDate.getDate() + 1);
+    const end = endDate.toISOString().slice(0, 10);
+    return `and(sold_at.gte.${start},sold_at.lt.${end})`;
+  });
+  const orFilter = dateFilters.join(",");
 
-      if (salesError) {
-        console.error(salesError);
-        alert("会計履歴の取得に失敗しました。");
-        return;
-      }
+  // 5. salesを取得
+  const { data: salesData, error: salesError } = await mySupabase
+    .from("sales")
+    .select(`
+      sale_id,
+      sold_at,
+      registers ( register_name ),
+      profiles!sales_user_id_fkey ( display_name )
+    `)
+    .eq("is_deleted", false)
+    .or(orFilter)
+    .order("sold_at", { ascending: true });
 
-      renderHistory(salesData);
+  if (salesError) {
+    console.error(salesError);
+    alert("会計履歴の取得に失敗しました。");
+    return;
+  }
+
+  // 6. 上記salesに対応するsale_itemsを取得(status='active'のみ)
+  const saleIds = salesData.map(sale => sale.sale_id);
+
+  let saleItemsData = [];
+  if (saleIds.length > 0) {
+    const { data: itemsData, error: itemsError } = await mySupabase
+      .from("sale_items")
+      .select("sale_id, product_id, quantity")
+      .eq("status", "active")
+      .in("sale_id", saleIds);
+
+    if (itemsError) {
+      console.error(itemsError);
+      alert("会計明細の取得に失敗しました。");
+      return;
     }
+    saleItemsData = itemsData;
+  }
 
-function renderHistory(salesData) {
+  renderTableHeader(festivalProductsData);
+  renderHistory(salesData, festivalProductsData, saleItemsData);
+}
+    
+// 商品列の見出しを追加
+function renderTableHeader(festivalProductsData) {
+  const headerRow = document.getElementById("historyTableHeaderRow");
+
+  festivalProductsData.forEach(fp => {
+    const th = document.createElement("th");
+    th.textContent = fp.products ? fp.products.abbreviation : "";
+    headerRow.appendChild(th);
+  });
+}
+
+function renderHistory(salesData, festivalProductsData, saleItemsData) {
   const tbody = document.getElementById("historyTableBody");
   tbody.innerHTML = "";
+
+  // sale_id × product_id ごとの個数を集計しておく
+  // 例: quantityMap["12"]["3"] = 5 (sale_id=12でproduct_id=3が5個)
+  const quantityMap = {};
+  saleItemsData.forEach(item => {
+    const saleKey = item.sale_id;
+    const productKey = item.product_id;
+    if (!quantityMap[saleKey]) {
+      quantityMap[saleKey] = {};
+    }
+    if (!quantityMap[saleKey][productKey]) {
+      quantityMap[saleKey][productKey] = 0;
+    }
+    quantityMap[saleKey][productKey] += item.quantity;
+  });
 
   // 古い順に通し番号を1から振る
   const numbered = salesData.map((sale, index) => ({
@@ -113,7 +180,7 @@ function renderHistory(salesData) {
     serialNumber: index + 1
   }));
 
-  // 表示は新しい順にしたいので反転
+  // 表示は新しい順
   numbered.reverse().forEach(sale => {
     const tr = document.createElement("tr");
 
@@ -121,13 +188,22 @@ function renderHistory(salesData) {
     const userName = sale.profiles ? sale.profiles.display_name : "";
     const soldAtText = formatDateTime(sale.sold_at);
 
-    tr.innerHTML = `
+    let rowHtml = `
       <td>${sale.serialNumber}</td>
       <td>${registerName}</td>
       <td>${userName}</td>
       <td>${soldAtText}</td>
     `;
 
+    // 商品列を display_order 順に追加
+    festivalProductsData.forEach(fp => {
+      const qty = (quantityMap[sale.sale_id] && quantityMap[sale.sale_id][fp.product_id])
+        ? quantityMap[sale.sale_id][fp.product_id]
+        : 0;
+      rowHtml += `<td>${qty}</td>`;
+    });
+
+    tr.innerHTML = rowHtml;
     tbody.appendChild(tr);
   });
 }
