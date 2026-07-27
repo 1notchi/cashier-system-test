@@ -89,10 +89,10 @@
       // 4. salesを取得(レジ名・ユーザー名も一緒に結合して取得)
       const { data: salesData, error: salesError } = await mySupabase
         .from("sales")
-        .select(`sale_id, sold_at, registers ( register_name ), profiles ( display_name ) `)
+        .select(`sale_id, sold_at, registers ( register_name ), profiles!sales_user_id_fkey ( display_name )`)
         .eq("is_deleted", false)
         .or(orFilter)
-        .order("sold_at", { ascending: true }); // 古い順で取得(番号付け用)
+        .order("sold_at", { ascending: true });
 
       if (salesError) {
         console.error(salesError);
