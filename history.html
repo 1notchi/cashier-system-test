@@ -15,11 +15,22 @@
 <body>
 
   <main class="page-content">
-
   <h1>NFレジシステム 会計履歴</h1>
-  <p>この機能は作成中です</p>
 
-  </main>
+  <table class="history-table">
+    <thead>
+      <tr>
+        <th>No.</th>
+        <th>レジ</th>
+        <th>ユーザー</th>
+        <th>会計時刻</th>
+      </tr>
+    </thead>
+    <tbody id="historyTableBody">
+      <!-- ここにJSで行を追加します -->
+    </tbody>
+  </table>
+</main>
 
   <!-- 共通ヘッダー -->
   <script src="header.js"></script>
@@ -27,7 +38,110 @@
   <script src="auth.js"></script>
   
   <script>
-    /* ここにJavaScriptを記述 */
+    document.addEventListener("DOMContentLoaded", async () => {
+      await loadHistory();
+    });
+
+    async function loadHistory() {
+      // 1. 現在開催中のfestival_idを取得
+      const { data: settingsData, error: settingsError } = await mySupabase
+        .from("settings")
+        .select("current_festival_id")
+        .single();
+
+      if (settingsError) {
+        console.error(settingsError);
+        alert("開催情報の取得に失敗しました。");
+        return;
+      }
+
+      const festivalId = settingsData.current_festival_id;
+
+      // 2. 該当festivalの開催日一覧(target_date)を取得
+     const { data: datesData, error: datesError } = await mySupabase
+        .from("festival_dates")
+        .select("target_date")
+        .eq("festival_id", festivalId);
+
+      if (datesError) {
+        console.error(datesError);
+        alert("開催日情報の取得に失敗しました。");
+        return;
+      }
+
+      if (!datesData || datesData.length === 0) {
+        console.warn("開催日が設定されていません。");
+        return;
+      }
+
+      // 3. 各開催日について「0:00〜翌日0:00」の範囲条件をつくる
+      const dateFilters = datesData.map(row => {
+        const start = row.target_date; // 例: "2026-07-27"
+        const startDate = new Date(start);
+        const endDate = new Date(startDate);
+        endDate.setDate(endDate.getDate() + 1);
+        const end = endDate.toISOString().slice(0, 10); // 翌日の日付
+
+        return `and(sold_at.gte.${start},sold_at.lt.${end})`;
+      });
+      const orFilter = dateFilters.join(",");
+
+      // 4. salesを取得(レジ名・ユーザー名も一緒に結合して取得)
+      const { data: salesData, error: salesError } = await mySupabase
+        .from("sales")
+        .select(`sale_id, sold_at, registers ( register_name ), profiles ( display_name ) `)
+        .eq("is_deleted", false)
+        .or(orFilter)
+        .order("sold_at", { ascending: true }); // 古い順で取得(番号付け用)
+
+      if (salesError) {
+        console.error(salesError);
+        alert("会計履歴の取得に失敗しました。");
+        return;
+      }
+
+      renderHistory(salesData);
+    }
+
+function renderHistory(salesData) {
+  const tbody = document.getElementById("historyTableBody");
+  tbody.innerHTML = "";
+
+  // 古い順に通し番号を1から振る
+  const numbered = salesData.map((sale, index) => ({
+    ...sale,
+    serialNumber: index + 1
+  }));
+
+  // 表示は新しい順にしたいので反転
+  numbered.reverse().forEach(sale => {
+    const tr = document.createElement("tr");
+
+    const registerName = sale.registers ? sale.registers.register_name : "";
+    const userName = sale.profiles ? sale.profiles.display_name : "";
+    const soldAtText = formatDateTime(sale.sold_at);
+
+    tr.innerHTML = `
+      <td>${sale.serialNumber}</td>
+      <td>${registerName}</td>
+      <td>${userName}</td>
+      <td>${soldAtText}</td>
+    `;
+
+    tbody.appendChild(tr);
+  });
+}
+
+function formatDateTime(isoString) {
+  const d = new Date(isoString);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mm = String(d.getMinutes()).padStart(2, "0");
+  const ss = String(d.getSeconds()).padStart(2, "0");
+  return `${y}/${m}/${day} ${hh}:${mm}:${ss}`;
+}
   </script>
 
 </body>
