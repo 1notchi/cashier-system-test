@@ -7,7 +7,7 @@
   <meta name="robots" content="noindex, nofollow">
   <title>NFレジシステム_会計履歴</title>
   <link rel="stylesheet" href="stylesheet.css">
-  <!--<link rel="stylesheet" href="style_history.css">-->
+  <link rel="stylesheet" href="history.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
 </head>
@@ -17,19 +17,23 @@
   <main class="page-content">
   <h1>NFレジシステム 会計履歴</h1>
 
-  <table class="history-table">
-  <thead>
-    <tr id="historyTableHeaderRow">
-      <th>No.</th>
-      <th>レジ</th>
-      <th>ユーザー</th>
-      <th>会計時刻</th>
-      <!-- 商品列・操作列はJSで追加 -->
-    </tr>
-  </thead>
-  <tbody id="historyTableBody">
-  </tbody>
-</table>
+  <div class="history-container">
+    <div class="table-wrapper">
+      <table class="history-table">
+        <thead>
+          <tr id="historyTableHeaderRow">
+            <th>No.</th>
+            <th>レジ</th>
+            <th>ユーザー</th>
+            <th>会計時刻</th>
+            <!-- 商品列・操作列はJSで追加 -->
+          </tr>
+        </thead>
+        <tbody id="historyTableBody">
+        </tbody>
+      </table>
+    </div>
+  </div>
 </main>
 
   <!-- 共通ヘッダー -->
