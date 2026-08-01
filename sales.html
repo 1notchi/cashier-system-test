@@ -6,7 +6,7 @@
   <meta name="robots" content="noindex, nofollow">
   <title>NFレジシステム_売上確認画面</title>
   <link rel="stylesheet" href="stylesheet.css">
-  <link rel="stylesheet" href="style_sales.css">
+  <link rel="stylesheet" href="sales.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
 </head>
@@ -15,74 +15,74 @@
 
   <main class="page-content">
 
-  <div class="sales-container">
+    <div class="sales-container">
 
-    <section class="control-panel">
-      <div class="segment-container">
-        <button class="segment-btn active" onclick="switchRegister('all', this)">すべてのレジ</button>
-        <button class="segment-btn" onclick="switchRegister('NF', this)">NFレジ</button>
-        <button class="segment-btn" onclick="switchRegister('北部祭', this)">北部祭レジ</button>
-        <button class="segment-btn" onclick="switchRegister('移動販売', this)">移動販売</button>
-      </div>
-
-      <div class="sync-container">
-        <span class="last-update-time" id="txtLastUpdate">最終更新: --:--:--</span>
-        <button class="btn-sync" onclick="fetchSalesData()">
-          <span>🔄</span> データを最新に更新
-        </button>
-      </div>
-    </section>
-
-    <section class="matrix-panel">
-      <div class="matrix-header">
-        <div class="mode-container">
-          <button class="mode-btn active" id="btnModeQty" onclick="switchDisplayMode('qty')">個数モード</button>
-          <button class="mode-btn" id="btnModeAmount" onclick="switchDisplayMode('amount')">金額モード</button>
+      <section class="control-panel">
+        <div class="segment-container">
+          <button class="segment-btn active" onclick="switchRegister('all', this)">すべてのレジ</button>
+          <button class="segment-btn" onclick="switchRegister('NF', this)">NFレジ</button>
+          <button class="segment-btn" onclick="switchRegister('北部祭', this)">北部祭レジ</button>
+          <button class="segment-btn" onclick="switchRegister('移動販売', this)">移動販売</button>
         </div>
-      </div>
 
-      <div class="table-wrapper">
-        <table class="sales-matrix-table">
-          <thead id="matrixTableHead">
-          </thead>
-          <tbody id="matrixTableBody">
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <section class="summary-board-container">
-
-      <div class="summary-card">
-        <div class="card-title">📅 今日のサマリー <span style="font-size: 14px; font-weight: normal; color: #718096;"
-            id="txtTodayLabel">(--/--)
-          </span></div>
-        <div class="card-row">
-          <span class="card-label">会計回数</span>
-          <div class="card-value" id="lblTodayCount">0<span>回</span></div>
+        <div class="sync-container">
+          <span class="last-update-time" id="txtLastUpdate">最終更新: --:--:--</span>
+          <button class="btn-sync" onclick="fetchSalesData()">
+            <span>🔄</span> データを最新に更新
+          </button>
         </div>
-        <div class="card-row">
-          <span class="card-label">今日の売上金額</span>
-          <div class="card-value" style="color: #3182ce;" id="lblTodayAmount">0<span>円</span></div>
-        </div>
-      </div>
+      </section>
 
-      <div class="summary-card total-scope">
-        <div class="card-title">🏆 期間中の総サマリー <span
-            style="font-size: 14px; font-weight: normal; color: #718096;">(学祭期間通算)</span></div>
-        <div class="card-row">
-          <span class="card-label">総会計回数</span>
-          <div class="card-value" id="lblTotalCount">0<span>回</span></div>
+      <section class="matrix-panel">
+        <div class="matrix-header">
+          <div class="mode-container">
+            <button class="mode-btn active" id="btnModeQty" onclick="switchDisplayMode('qty')">個数モード</button>
+            <button class="mode-btn" id="btnModeAmount" onclick="switchDisplayMode('amount')">金額モード</button>
+          </div>
         </div>
-        <div class="card-row">
-          <span class="card-label">総売上金額</span>
-          <div class="card-value" style="color: #38a169;" id="lblTotalAmount">0<span>円</span></div>
+
+        <div class="table-wrapper">
+          <table class="sales-matrix-table">
+            <thead id="matrixTableHead">
+            </thead>
+            <tbody id="matrixTableBody">
+            </tbody>
+          </table>
         </div>
-      </div>
+      </section>
 
-    </section>
+      <section class="summary-board-container">
 
-  </div>
+        <div class="summary-card">
+          <div class="card-title">📅 今日のサマリー <span style="font-size: 14px; font-weight: normal; color: #718096;"
+              id="txtTodayLabel">(--/--)
+            </span></div>
+          <div class="card-row">
+            <span class="card-label">会計回数</span>
+            <div class="card-value" id="lblTodayCount">0<span>回</span></div>
+          </div>
+          <div class="card-row">
+            <span class="card-label">今日の売上金額</span>
+            <div class="card-value" style="color: #3182ce;" id="lblTodayAmount">0<span>円</span></div>
+          </div>
+        </div>
+
+        <div class="summary-card total-scope">
+          <div class="card-title">🏆 期間中の総サマリー <span
+              style="font-size: 14px; font-weight: normal; color: #718096;">(学祭期間通算)</span></div>
+          <div class="card-row">
+            <span class="card-label">総会計回数</span>
+            <div class="card-value" id="lblTotalCount">0<span>回</span></div>
+          </div>
+          <div class="card-row">
+            <span class="card-label">総売上金額</span>
+            <div class="card-value" style="color: #38a169;" id="lblTotalAmount">0<span>円</span></div>
+          </div>
+        </div>
+
+      </section>
+
+    </div>
 
   </main>
 
@@ -90,7 +90,7 @@
   <script src="header.js"></script>
   <!-- mySupabase生成, ログイン認証 -->
   <script src="auth.js"></script>
-  
+
   <script>
     // ========================================
     //     状態管理用のグローバル変数
@@ -147,17 +147,17 @@
     //取得対象:festival_products（表示対象商品）, registers（レジ一覧）, festival_dates（集計対象日）
     async function loadMasterData() {
 
-     // 設定を取得
-      const {data: settingsData, error: settingsError}
+      // 設定を取得
+      const { data: settingsData, error: settingsError }
         = await mySupabase
-        .from('settings')
-        .select('current_festival_id')
-        .single();
+          .from('settings')
+          .select('current_festival_id')
+          .single();
 
       if (settingsError) {
         throw settingsError;
       }
-      
+
       // 現在の学祭の商品一覧を取得
       const {
         data: slotData,
@@ -190,17 +190,17 @@
       registers = registerData;
 
       // 学祭期間の日付一覧を取得
-      const {data: festivalDateData, error: festivalDateError}
+      const { data: festivalDateData, error: festivalDateError }
         = await mySupabase
-        .from('festival_dates')
-        .select('target_date')
-        .eq('festival_id', settingsData.current_festival_id)
-        .order('target_date');
-      
+          .from('festival_dates')
+          .select('target_date')
+          .eq('festival_id', settingsData.current_festival_id)
+          .order('target_date');
+
       if (festivalDateError) {
         throw festivalDateError;
       }
-      
+
       targetDates = festivalDateData.map(row => row.target_date.replaceAll('-', '/'));
 
       console.log(festivalProducts);

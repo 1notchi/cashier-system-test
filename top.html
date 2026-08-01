@@ -7,7 +7,7 @@
   <meta name="robots" content="noindex, nofollow">
   <title>NFレジシステム_トップ</title>
   <link rel="stylesheet" href="stylesheet.css">
-  <link rel="stylesheet" href="style_top.css">
+  <link rel="stylesheet" href="top.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
 </head>
@@ -16,21 +16,19 @@
 
   <main class="page-content">
 
-  <h1>NFレジシステム</h1>
-  <p>メニューを選択してください</p>
+    <h1>NFレジシステム</h1>
+    <p>メニューを選択してください</p>
 
-  <div class="button-container">
-    <a href="cashier.html" class="btn btn-cashier">レジ画面へ</a>
-    <a href="sales.html" class="btn btn-sales">売上確認へ</a>
-  </div>
+    <div class="button-container">
+      <a href="cashier.html" class="btn btn-cashier">レジ画面へ</a>
+      <a href="sales.html" class="btn btn-sales">売上確認へ</a>
+    </div>
 
-  <div class="logout-container">
-    <button
-      class="btn btn-logout"
-      onclick="logout()">
-      ログアウト
-    </button>
-  </div>
+    <div class="logout-container">
+      <button class="btn btn-logout" onclick="logout()">
+        ログアウト
+      </button>
+    </div>
 
   </main>
 
@@ -38,7 +36,7 @@
   <script src="header.js"></script>
   <!-- mySupabase生成, ログイン認証 -->
   <script src="auth.js"></script>
-  
+
   <script>
     async function logout() {
       await mySupabase.auth.signOut();

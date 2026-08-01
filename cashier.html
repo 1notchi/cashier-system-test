@@ -7,7 +7,7 @@
   <meta name="robots" content="noindex, nofollow">
   <title>NFレジシステム_レジ</title>
   <link rel="stylesheet" href="stylesheet.css">
-  <link rel="stylesheet" href="style_cashier.css">
+  <link rel="stylesheet" href="cashier.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
 </head>
@@ -89,7 +89,7 @@
   <script src="header.js"></script>
   <!-- mySupabase生成, ログイン認証 -->
   <script src="auth.js"></script>
-  
+
   <script>
 
     // ====================
@@ -166,7 +166,7 @@
       data.forEach(row => {
 
         // display_order → item_01, item_02 ... の形式へ変換
-        const itemId = `item_${String(row.display_order).padStart(2,'0')}`;
+        const itemId = `item_${String(row.display_order).padStart(2, '0')}`;
 
         // 商品未設定スロットは空欄として登録
         if (row.product_id === null) {
@@ -728,17 +728,17 @@
 
       try {
         // ログイン中のユーザーを取得
-        const {data: { user }, error: userError} = await mySupabase.auth.getUser();
+        const { data: { user }, error: userError } = await mySupabase.auth.getUser();
         if (userError || !user) {
           throw new Error("ログインユーザーを取得できません。");
         }
         const userId = user.id;
-        
+
         // 売上ヘッダ（salesテーブル）を作成し、発行された sale_id を取得する
         const { data: saleData, error: saleError } =
           await mySupabase
             .from('sales')
-            .insert([{register_id: currentRegisterId, user_id: userId}])
+            .insert([{ register_id: currentRegisterId, user_id: userId }])
             .select()
             .single();
 
