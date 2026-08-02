@@ -5,10 +5,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
-  <title>NFレジシステム_トップ</title>
+  <title>NFレジシステム_設定画面</title>
   <link rel="stylesheet" href="stylesheet.css">
   <link rel="stylesheet" href="header.css">
-  <link rel="stylesheet" href="top.css">
+  <!--<link rel="stylesheet" href="settings.css">-->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
 </head>
@@ -19,21 +19,7 @@
   <div id="header-container"></div>
 
   <main class="page-content">
-
-    <h1>NFレジシステム</h1>
-    <p>メニューを選択してください</p>
-
-    <div class="button-container">
-      <a href="cashier.html" class="btn btn-cashier">レジ画面へ</a>
-      <a href="sales.html" class="btn btn-sales">売上確認へ</a>
-    </div>
-
-    <div class="logout-container">
-      <button class="btn btn-logout" onclick="logout()">
-        ログアウト
-      </button>
-    </div>
-
+    <h1>NFレジシステム 設定画面</h1>
   </main>
 
   <!-- mySupabase生成, ログイン認証 -->
@@ -41,13 +27,9 @@
   <!-- 共通ヘッダー -->
   <script src="header.js"></script>
 
-  <script>
-    async function logout() {
-      currentProfileCache = null;
-      await mySupabase.auth.signOut();
-      location.href = "login.html";
-    }
-  </script>
+
+  <!-- setting.html専用処理 -->
+  <script src="settings.js"></script>
 
 </body>
 

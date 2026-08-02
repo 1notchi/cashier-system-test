@@ -14,7 +14,7 @@
   border: 1px solid #e2e8f0;
   border-radius: 6px;
   background-color: white;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
 }
 
 /* 会計履歴テーブル本体 */
@@ -25,12 +25,14 @@
   font-size: 14px;
   white-space: nowrap;
 }
+
 .history-table th,
 .history-table td {
   padding: 10px 8px;
   border-bottom: 1px solid #e2e8f0;
   border-right: 1px solid #e2e8f0;
 }
+
 .history-table th {
   background-color: #f7fafc;
   color: #4a5568;
@@ -50,18 +52,25 @@
   left: 0;
   z-index: 1;
 }
+
 .history-table th:first-child {
-  z-index: 3; /* 見出しの先頭セルは最前面 */
+  z-index: 3;
+  /* 見出しの先頭セルは最前面 */
 }
 
-/* 行ホバー時のハイライト */
-.history-table tbody tr:hover {
-  background-color: #edf2f7 !important;
+.history-table tbody tr:not(.deleted-row):hover {
+  background-color: #edf2f7;
 }
 
 /* 操作列(最終列)は横幅を詰めて中央寄せ */
 .history-table td:last-child {
   white-space: nowrap;
+}
+
+/* 削除済み行 */
+.history-table tbody tr.deleted-row {
+  background-color: #f3f4f6;
+  color: #9ca3af;
 }
 
 /* 編集・削除ボタン */
@@ -76,17 +85,83 @@
   transition: background 0.2s;
   margin: 0 3px;
 }
+
 .edit-button {
   background-color: #ebf8ff;
   color: #2b6cb0;
 }
-.edit-button:hover {
+
+.edit-button:not(:disabled):hover {
   background-color: #bee3f8;
 }
+
 .delete-button {
   background-color: #fff5f5;
   color: #c53030;
 }
-.delete-button:hover {
+
+.delete-button:not(:disabled):hover {
   background-color: #fed7d7;
+}
+
+.edit-button:disabled,
+.delete-button:disabled {
+  background-color: #e5e7eb;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+
+  background: rgba(0, 0, 0, 0.4);
+
+  display: none;
+
+  justify-content: center;
+  align-items: center;
+
+  z-index: 1000;
+}
+
+.modal-overlay.show {
+  display: flex;
+}
+
+.modal {
+  background: white;
+
+  border-radius: 8px;
+
+  padding: 24px;
+
+  min-width: 320px;
+
+  text-align: center;
+
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .2);
+}
+
+.modal p {
+  margin-bottom: 24px;
+  font-size: 16px;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.modal-buttons button:not(.delete-button) {
+  padding: 6px 16px;
+  border: 1px solid #cbd5e0;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+}
+
+.modal-buttons button:not(.delete-button):hover {
+  background: #edf2f7;
 }

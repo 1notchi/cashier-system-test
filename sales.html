@@ -6,12 +6,16 @@
   <meta name="robots" content="noindex, nofollow">
   <title>NFレジシステム_売上確認画面</title>
   <link rel="stylesheet" href="stylesheet.css">
+  <link rel="stylesheet" href="header.css">
   <link rel="stylesheet" href="sales.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
 </head>
 
 <body>
+
+  <!-- 共通ヘッダー挿入領域 -->
+  <div id="header-container"></div>
 
   <main class="page-content">
 
@@ -86,10 +90,11 @@
 
   </main>
 
-  <!-- 共通ヘッダー -->
-  <script src="header.js"></script>
   <!-- mySupabase生成, ログイン認証 -->
   <script src="auth.js"></script>
+  <!-- 共通ヘッダー -->
+  <script src="header.js"></script>
+
 
   <script>
     // ========================================

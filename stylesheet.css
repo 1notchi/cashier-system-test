@@ -9,9 +9,9 @@ body {
     flex-direction: column;
 }
 
-.page-content{
-    flex:1;
-    padding:15px 30px 25px;
+.page-content {
+    flex: 1;
+    padding: 15px 30px 25px;
 }
 
 /* 全ての要素でサイズ計算を狂わせないための設定 */
