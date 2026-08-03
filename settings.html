@@ -8,19 +8,120 @@
   <title>NFレジシステム_設定画面</title>
   <link rel="stylesheet" href="stylesheet.css">
   <link rel="stylesheet" href="header.css">
-  <!--<link rel="stylesheet" href="settings.css">-->
+  <link rel="stylesheet" href="settings.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
 </head>
 
 <body>
-
   <!-- 共通ヘッダー挿入領域 -->
   <div id="header-container"></div>
 
   <main class="page-content">
-    <h1>NFレジシステム 設定画面</h1>
+
+    <h1>設定</h1>
+
+    <!-- タイトル -->
+    <h2 class="settings-section-title">日程管理</h2>
+
+    <!-- カード -->
+    <section class="settings-card">
+      <div class="setting-row">
+        <div class="setting-label">現在の学園祭</div>
+
+        <div class="setting-value">
+          <span id="currentFestivalName">読み込み中...</span>
+        </div>
+
+        <button class="setting-button" onclick="changeFestival()">
+          変更
+        </button>
+      </div>
+
+      <div class="setting-row">
+        <div class="setting-label">日程</div>
+
+        <div class="setting-value">
+          <span id="festivalDates">読み込み中...</span>
+        </div>
+
+        <button class="setting-button" onclick="editFestivalDates()">
+          編集
+        </button>
+      </div>
+    </section>
+
   </main>
+
+  <!-- 学園祭変更モーダル -->
+  <div id="festivalModal" class="modal-overlay" style="display:none;">
+    <div class="modal festival-modal">
+
+      <h2>現在の学園祭を変更</h2>
+
+      <p class="modal-warning">
+        ⚠ この設定を変更すると、全てのユーザーの表示が切り替わります。
+      </p>
+
+      <div class="festival-row">
+        <div class="festival-label">現在</div>
+        <div id="currentFestivalText"></div>
+      </div>
+
+      <div class="festival-row">
+        <div class="festival-label">切り替え先</div>
+
+        <select id="festivalSelect">
+        </select>
+      </div>
+
+      <div class="modal-buttons">
+        <button class="setting-button" onclick="confirmFestivalChange()">
+          切り替える
+        </button>
+
+        <button class="cancel-button" onclick="closeFestivalModal()">
+          キャンセル
+        </button>
+      </div>
+
+      <hr>
+
+      <button class="add-festival-button" onclick="openAddFestivalModal()">
+        ＋ 新しい学園祭を追加
+      </button>
+
+      <p class="modal-note">
+        ※ 作成した学園祭は削除できません。
+      </p>
+
+    </div>
+  </div>
+
+  <!-- 日程編集モーダル -->
+  <div id="dateEditModal" class="modal-overlay" style="display:none;">
+    <div class="modal date-edit-modal">
+
+      <h2>日程を編集</h2>
+
+
+      <div class="modal-buttons">
+
+        <button class="setting-button" onclick="confirmDateEdit()">
+          決定
+        </button>
+
+
+        <button class="cancel-button" onclick="closeDateEditModal()">
+          キャンセル
+        </button>
+
+      </div>
+
+    </div>
+  </div>
+
+  <div id="toastMessage" class="toast-message"></div>
 
   <!-- mySupabase生成, ログイン認証 -->
   <script src="auth.js"></script>

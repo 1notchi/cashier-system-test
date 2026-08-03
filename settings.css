@@ -1,0 +1,214 @@
+/* ==========================
+   設定カード
+========================== */
+
+.settings-section-title {
+  max-width: 900px;
+  margin: 32px auto 10px;
+  font-size: 22px;
+  font-weight: bold;
+  color: #374151;
+}
+
+.settings-card {
+  max-width: 900px;
+  margin: 0 auto 32px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .08);
+  padding: 16px 28px;
+}
+
+.settings-card h2 {
+  margin-top: 0;
+  margin-bottom: 28px;
+  color: #374151;
+}
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 18px 0;
+  border-top: 1px solid #e5e7eb;
+}
+
+.setting-row:first-of-type {
+  border-top: none;
+}
+
+.setting-label {
+  width: 120px;
+  font-weight: bold;
+  color: #4b5563;
+}
+
+.setting-value {
+  flex: 1;
+  color: #111827;
+  line-height: 1.7;
+}
+
+.setting-button {
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 20px;
+  cursor: pointer;
+  transition: .2s;
+}
+
+.setting-button:hover {
+  background: #1d4ed8;
+}
+
+/* ==========================
+   モーダル共通
+========================== */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+
+  background: rgba(0, 0, 0, 0.4);
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  z-index: 2000;
+}
+
+.modal {
+  background: white;
+
+  border-radius: 10px;
+
+  padding: 28px;
+
+  min-width: 420px;
+
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .2);
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+/* ==========================
+   学園祭変更モーダル
+========================== */
+
+.festival-modal {
+  width: 520px;
+  max-width: 90%;
+}
+
+.modal-warning {
+  margin: 20px 0 28px;
+  color: #b45309;
+  font-size: 14px;
+}
+
+.festival-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.festival-label {
+  width: 120px;
+  font-weight: bold;
+  color: #4b5563;
+}
+
+#festivalSelect {
+  flex: 1;
+  padding: 8px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 15px;
+}
+
+.cancel-button {
+  padding: 8px 20px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+}
+
+.cancel-button:hover {
+  background: #f3f4f6;
+}
+
+.add-festival-button {
+  width: 100%;
+  margin-top: 18px;
+  padding: 12px;
+
+  border: 1px dashed #94a3b8;
+  border-radius: 8px;
+
+  background: #f8fafc;
+
+  cursor: pointer;
+  transition: .2s;
+}
+
+.add-festival-button:hover {
+  background: #eff6ff;
+}
+
+.modal-note {
+  margin-top: 12px;
+  text-align: center;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+/* ==========================
+   日程編集モーダル
+========================== */
+
+.date-edit-modal {
+  width: 520px;
+  max-width: 90%;
+}
+
+.date-edit-modal h2 {
+  margin-top: 0;
+  margin-bottom: 24px;
+}
+
+/*========================
+  Toast
+========================*/
+
+.toast-message {
+  position: fixed;
+  top: -100px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 14px 28px;
+  background: #48bb78;
+  color: white;
+  font-size: 15px;
+  font-weight: bold;
+  border-radius: 8px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .15);
+  opacity: 0;
+  transition: top .3s ease, opacity .3s ease;
+  pointer-events: none;
+  z-index: 2000;
+}
+
+.toast-message.show {
+  top: 24px;
+  opacity: 1;
+}

@@ -1,10 +1,10 @@
 /* --- レジ画面用のデザイン --- */
 
 .cashier-container {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    min-height: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
 }
 
 /* 外箱：3つのボタンを包むカプセル枠 */
@@ -14,9 +14,11 @@
   background-color: #e2e8f0;
   padding: 3px;
   border-radius: 30px;
-  box-shadow: inset 0 1px 3px rgba(0,0,0,.1);
-  user-select: none; /*選択を禁止*/
-  -webkit-user-select: none; /*選択を禁止*/
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, .1);
+  user-select: none;
+  /*選択を禁止*/
+  -webkit-user-select: none;
+  /*選択を禁止*/
 }
 
 /* 3つのボタン共通のスタイル */
@@ -32,7 +34,8 @@
   transition: all 0.2s ease;
   outline: none;
   -webkit-tap-highlight-color: transparent;
-  white-space: nowrap; /* 文字が途中で改行されるのを防ぐ */
+  white-space: nowrap;
+  /* 文字が途中で改行されるのを防ぐ */
 }
 
 /* 現在選択されているボタンのスタイル */
@@ -63,89 +66,91 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   text-align: center;
   height: 100%;
-  user-select: none; /*選択を禁止*/
-  -webkit-user-select: none; /*選択を禁止*/
+  user-select: none;
+  /*選択を禁止*/
+  -webkit-user-select: none;
+  /*選択を禁止*/
 }
 
 /* 箱の上部3/5を占めるクリックエリア */
 .item-click-area {
-height: 60%;
-display: flex;
-flex-direction: column;
-justify-content: center;
-cursor: pointer;
+  height: 60%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  cursor: pointer;
 }
 
 /* 商品名 */
 .item-name {
-font-size: 18px;
-font-weight: bold;
-color: #333;
-margin: 0;
-margin-bottom: 6px;
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+  margin: 0;
+  margin-bottom: 6px;
 }
 
 /* 価格 */
 .item-price {
-font-size: 14px;
-color: #666;
-font-weight: bold;
-margin: 0;
+  font-size: 14px;
+  color: #666;
+  font-weight: bold;
+  margin: 0;
 }
 
 /* --- 個数調整コントローラーのデザイン --- */
 .quantity-control {
-height: 40%;
-display: flex;
-justify-content: space-between;
-align-items: center;
+  height: 40%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 /* ＋とーのボタン共通 */
 .btn-qty {
-width: 48px;
-height: 32px;
-font-size: 18px;
-font-weight: bold;
-border: none;
-color: white;
-border-radius: 5px;
-cursor: pointer;
-display: flex;
-justify-content: center;
-align-items: center;
+  width: 48px;
+  height: 32px;
+  font-size: 18px;
+  font-weight: bold;
+  border: none;
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 /* ーボタンの色（パターンA：落ち着いたネイビーグレー） */
 .btn-qty:first-child {
-background-color: #4a5568;
+  background-color: #4a5568;
 }
 
 .btn-qty:first-child:active {
-background-color: #2d3748;
+  background-color: #2d3748;
 }
 
 /* ＋ボタンの色（パターンA：鮮やかなミントグリーン） */
 .btn-qty:last-child {
-background-color: #2ec4b6;
+  background-color: #2ec4b6;
 }
 
 .btn-qty:last-child:active {
-background-color: #0f9f90;
+  background-color: #0f9f90;
 }
 
 /* 個数表示の数字（標準：黒） */
 .qty-count {
-font-size: 20px;
-font-weight: 900;
-min-width: 35px;
-text-align: center;
-color: #333;
+  font-size: 20px;
+  font-weight: 900;
+  min-width: 35px;
+  text-align: center;
+  color: #333;
 }
 
 /* 個数が1以上になったとき用のデザイン（赤） */
 .qty-count.has-count {
-color: #dc3545;
+  color: #dc3545;
 }
 
 /* --- 下部会計エリア全体の枠組み --- */
@@ -169,8 +174,10 @@ color: #dc3545;
   border-radius: 6px;
   cursor: pointer;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  user-select: none; /*選択を禁止*/
-  -webkit-user-select: none; /*選択を禁止*/
+  user-select: none;
+  /*選択を禁止*/
+  -webkit-user-select: none;
+  /*選択を禁止*/
 }
 
 .btn-reset:active {
@@ -178,114 +185,128 @@ color: #dc3545;
 }
 
 .btn-gacha-loop {
-  width: 160px; /* 文字数に合わせて少し広めに確保 */
+  width: 160px;
+  /* 文字数に合わせて少し広めに確保 */
   padding: 12px 0;
   font-size: 15px;
   font-weight: bold;
   color: white;
-  background-color: #3b82f6; /* 画面に調和するスマートな青色 */
+  background-color: #3b82f6;
+  /* 画面に調和するスマートな青色 */
   border: none;
   border-radius: 6px;
   cursor: pointer;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  margin-left: 12px; /* リセットボタンとの間隔 */
+  margin-left: 12px;
+  /* リセットボタンとの間隔 */
   transition: background-color 0.1s;
-  user-select: none; /*選択を禁止*/
-  -webkit-user-select: none; /*選択を禁止*/
+  user-select: none;
+  /*選択を禁止*/
+  -webkit-user-select: none;
+  /*選択を禁止*/
 }
 
 .btn-gacha-loop:active {
-  background-color: #1d4ed8; /* タップした瞬間は濃い青に */
+  background-color: #1d4ed8;
+  /* タップした瞬間は濃い青に */
 }
 
 /* --- 「その他」自由入力エリアのデザイン（高さを白いバーに統合） --- */
 .other-item-container {
-display: flex;
-align-items: center;
-gap: 12px; /* パーツ間のすき間を少し広げてゆったりに */
-background-color: #fff;
-padding: 16px 20px; /* 上下16pxにして、右側の白いバー（footer-bar）と高さを完全に同期！ */
-border-radius: 8px; /* 丸みも右側のバー（8px）に統一 */
-box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.05); /* 影の付き方も右側と統一 */
-margin-left: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  /* パーツ間のすき間を少し広げてゆったりに */
+  background-color: #fff;
+  padding: 16px 20px;
+  /* 上下16pxにして、右側の白いバー（footer-bar）と高さを完全に同期！ */
+  border-radius: 8px;
+  /* 丸みも右側のバー（8px）に統一 */
+  box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.05);
+  /* 影の付き方も右側と統一 */
+  margin-left: 20px;
 }
 
 .other-label {
-font-size: 16px; /* 文字を少し大きく */
-font-weight: bold;
-color: #333;
+  font-size: 16px;
+  /* 文字を少し大きく */
+  font-weight: bold;
+  color: #333;
 }
 
 /* 商品名入力ボックス */
 .input-other-name {
-width: 200px;
-padding: 8px 12px; /* 入力欄も少し大きくして押しやすく */
-font-size: 16px;
-border: 1px solid #cbd5e0;
-border-radius: 4px;
-outline: none;
+  width: 200px;
+  padding: 8px 12px;
+  /* 入力欄も少し大きくして押しやすく */
+  font-size: 16px;
+  border: 1px solid #cbd5e0;
+  border-radius: 4px;
+  outline: none;
 }
 
 /* 金額入力ボックス */
 .input-other-price {
-width: 110px; /* マイナス符号が入る分、横幅を少し広く */
-padding: 8px 12px;
-font-size: 18px; /* 金額の数字を大きく */
-font-weight: bold;
-text-align: right;
-border: 1px solid #cbd5e0;
-border-radius: 4px;
-outline: none;
+  width: 110px;
+  /* マイナス符号が入る分、横幅を少し広く */
+  padding: 8px 12px;
+  font-size: 18px;
+  /* 金額の数字を大きく */
+  font-weight: bold;
+  text-align: right;
+  border: 1px solid #cbd5e0;
+  border-radius: 4px;
+  outline: none;
 }
 
 /* フォーカス時の仕様は維持 */
 .input-other-name:focus,
 .input-other-price:focus {
-border-color: #007bff;
-background-color: #f7fafc;
+  border-color: #007bff;
+  background-color: #f7fafc;
 }
 
 .other-unit {
-font-size: 16px;
-font-weight: bold;
-color: #333;
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
 }
 
 /* 右側の白い「合計金額・会計」バー */
 .footer-bar {
-display: flex;
-justify-content: space-between;
-align-items: center;
-padding: 16px 24px;
-background-color: #fff;
-border-radius: 8px;
-box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.05);
-flex-grow: 1;
-margin-left: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.05);
+  flex-grow: 1;
+  margin-left: 20px;
 }
 
 /* 右側に寄せるための金額・会計コンテナ */
 .footer-right {
-display: flex;
-align-items: center;
-gap: 30px;
-margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  margin-left: auto;
 }
 
 /* 合計金額エリア */
 .total-price-container {
-font-size: 24px;
-font-weight: bold;
-color: #333;
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
 }
 
 .total-price-label {
-margin-right: 15px;
+  margin-right: 15px;
 }
 
 .total-price-amount {
-font-size: 34px;
-color: #dc3545;
+  font-size: 34px;
+  color: #dc3545;
 }
 
 /* 右側の「会計」ボタン */
@@ -300,8 +321,10 @@ color: #dc3545;
   border-radius: 6px;
   cursor: pointer;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  user-select: none; /*選択を禁止*/
-  -webkit-user-select: none; /*選択を禁止*/
+  user-select: none;
+  /*選択を禁止*/
+  -webkit-user-select: none;
+  /*選択を禁止*/
 }
 
 .btn-checkout:active {
@@ -315,171 +338,171 @@ color: #dc3545;
 
 /* 画面全体を覆ってロックする「半透明の黒い遮断幕」 */
 .modal-overlay {
-position: fixed;
-top: 0;
-left: 0;
-width: 100vw;
-height: 100vh;
-background-color: rgba(0, 0, 0, 0.6);
-/* 後ろを暗くする */
-display: none;
-/* 最初は非表示 */
-justify-content: center;
-align-items: center;
-z-index: 9999;
-/* 一番手前に配置 */
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.6);
+  /* 後ろを暗くする */
+  display: none;
+  /* 最初は非表示 */
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  /* 一番手前に配置 */
 }
 
 /* 中央の白いウインドウ */
 .modal-window {
-background-color: #fff;
-width: 550px;
-max-width: 90%;
-border-radius: 12px;
-padding: 25px 30px;
-box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-display: flex;
-flex-direction: column;
-gap: 15px;
+  background-color: #fff;
+  width: 550px;
+  max-width: 90%;
+  border-radius: 12px;
+  padding: 25px 30px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
 }
 
 .modal-title {
-font-size: 22px;
-font-weight: bold;
-text-align: center;
-margin: 0;
-color: #333;
-border-bottom: 2px solid #f4f7f6;
-padding-bottom: 10px;
+  font-size: 22px;
+  font-weight: bold;
+  text-align: center;
+  margin: 0;
+  color: #333;
+  border-bottom: 2px solid #f4f7f6;
+  padding-bottom: 10px;
 }
 
 /* 購入した商品の一覧を出すエリア */
 .modal-receipt-area {
-max-height: 180px;
-overflow-y: auto;
-/* 商品が多すぎたらスクロール可能に */
-background-color: #fafbfc;
-border: 1px solid #e2e8f0;
-border-radius: 6px;
-padding: 10px 15px;
+  max-height: 180px;
+  overflow-y: auto;
+  /* 商品が多すぎたらスクロール可能に */
+  background-color: #fafbfc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 10px 15px;
 }
 
 .receipt-item {
-display: flex;
-justify-content: space-between;
-font-size: 15px;
-padding: 4px 0;
-color: #4a5568;
+  display: flex;
+  justify-content: space-between;
+  font-size: 15px;
+  padding: 4px 0;
+  color: #4a5568;
 }
 
 /* 金ek計算セクションの行 */
 .modal-calc-row {
-display: flex;
-justify-content: space-between;
-align-items: center;
-font-size: 18px;
-font-weight: bold;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 18px;
+  font-weight: bold;
 }
 
 /* お預かり金額の入力ボックス */
 .input-money {
-width: 160px;
-padding: 8px 12px;
-font-size: 22px;
-font-weight: bold;
-text-align: right;
-border: 2px solid #cbd5e0;
-border-radius: 6px;
-outline: none;
+  width: 160px;
+  padding: 8px 12px;
+  font-size: 22px;
+  font-weight: bold;
+  text-align: right;
+  border: 2px solid #cbd5e0;
+  border-radius: 6px;
+  outline: none;
 }
 
 .input-money:focus {
-border-color: #007bff;
-/* 入力中、青い枠線にする */
-background-color: #f7fafc;
+  border-color: #007bff;
+  /* 入力中、青い枠線にする */
+  background-color: #f7fafc;
 }
 
 /* お釣りのデカ文字 */
 .change-amount {
-font-size: 32px;
-color: #28a745;
-/* 正しい時は緑 */
+  font-size: 32px;
+  color: #28a745;
+  /* 正しい時は緑 */
 }
 
 /* お金が足りない時の警告色 */
 .change-amount.shortage {
-color: #dc3545;
-/* 不足時は赤 */
+  color: #dc3545;
+  /* 不足時は赤 */
 }
 
 /* ポップアップ下部のボタンエリア */
 .modal-actions {
-display: flex;
-justify-content: space-between;
-gap: 15px;
-margin-top: 10px;
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  margin-top: 10px;
 }
 
 .btn-modal-cancel {
-flex: 1;
-padding: 12px 0;
-font-size: 16px;
-font-weight: bold;
-background-color: #edf2f7;
-color: #4a5568;
-border: none;
-border-radius: 6px;
-cursor: pointer;
+  flex: 1;
+  padding: 12px 0;
+  font-size: 16px;
+  font-weight: bold;
+  background-color: #edf2f7;
+  color: #4a5568;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
 }
 
 .btn-modal-confirm {
-flex: 1;
-padding: 12px 0;
-font-size: 18px;
-font-weight: bold;
-background-color: #ffc107;
-color: white;
-border: none;
-border-radius: 6px;
-cursor: pointer;
-box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  flex: 1;
+  padding: 12px 0;
+  font-size: 18px;
+  font-weight: bold;
+  background-color: #ffc107;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 /* 金額不足でボタンが押せない時のスタイル */
 .btn-modal-confirm:disabled {
-background-color: #cbd5e0 !important;
-color: #718096 !important;
-cursor: not-allowed;
-box-shadow: none;
+  background-color: #cbd5e0 !important;
+  color: #718096 !important;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
 
 /* 自動で消えるメッセージボックス（トースト）のスタイル */
 .toast-message {
-position: fixed;
-top: -100px;
-/* 初期状態は画面の上側に隠しておく */
-left: 50%;
-transform: translateX(-50%);
-background-color: #48bb78;
-/* 安心感のあるグリーン */
-color: white;
-padding: 15px 30px;
-font-size: 1.2rem;
-font-weight: bold;
-border-radius: 8px;
-box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-z-index: 2000;
-/* ポップアップよりも手前に表示 */
-transition: top 0.4s ease, opacity 0.4s ease;
-/* スムーズに動かすための設定 */
-opacity: 0;
-pointer-events: none;
-/* クリックをすり抜けるようにする */
+  position: fixed;
+  top: -100px;
+  /* 初期状態は画面の上側に隠しておく */
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #48bb78;
+  color: white;
+  padding: 15px 30px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 2000;
+  /* ポップアップよりも手前に表示 */
+  transition: top 0.4s ease, opacity 0.4s ease;
+  /* スムーズに動かすための設定 */
+  opacity: 0;
+  pointer-events: none;
+  /* クリックをすり抜けるようにする */
 }
 
 /* メッセージを表示するときに付与するクラス */
 .toast-message.show {
-  top: 30px; /* 画面上部から30pxの位置にスライドイン */
+  top: 30px;
+  /* 画面上部から30pxの位置にスライドイン */
   opacity: 1;
 }
