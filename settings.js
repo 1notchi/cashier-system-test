@@ -91,6 +91,7 @@ async function loadFestivalSettings() {
 }
 
 function formatDate(dateString) {
+  if (!dateString) { return ""; }
   const d = new Date(dateString);
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
@@ -175,9 +176,181 @@ function openAddFestivalModal() {
 
 }
 
-function editFestivalDates() {
-
+async function editFestivalDates() {
+  loadDateFestivalSelect();
+  await loadFestivalDatesForEdit();
   document.getElementById("dateEditModal").style.display = "flex";
+}
+
+function loadDateFestivalSelect() {
+
+  const select = document.getElementById("dateFestivalSelect");
+
+  select.innerHTML = "";
+
+  festivalInfo.festivals.forEach(festival => {
+
+    const option = document.createElement("option");
+
+    option.value = festival.festival_id;
+    option.textContent = festival.festival_name;
+
+    if (festival.festival_id === festivalInfo.currentFestivalId) {
+      option.selected = true;
+    }
+
+    select.appendChild(option);
+
+  });
+
+}
+
+async function loadFestivalDatesForEdit() {
+
+  const festivalId = Number(
+    document.getElementById("dateFestivalSelect").value
+  );
+
+  const {
+    data,
+    error
+  } = await mySupabase
+    .from("festival_dates")
+    .select("target_date")
+    .eq("festival_id", festivalId)
+    .order("target_date", { ascending: true });
+
+  if (error) {
+    console.error(error);
+    alert("日程の取得に失敗しました。");
+    return;
+  }
+
+  const container =
+    document.getElementById("dateInputContainer");
+
+  container.innerHTML = "";
+
+  data.forEach(date => {
+
+    addDateInput(date.target_date);
+
+  });
+
+}
+
+function addDateInput(value = "") {
+
+  const container =
+    document.getElementById("dateInputContainer");
+
+  const row = document.createElement("div");
+
+  row.className = "festival-row date-row";
+
+  row.innerHTML = `
+  <div class="date-input-area">
+    <input
+      type="text"
+      class="date-input"
+      value="${formatDate(value)}"
+      placeholder="yyyy/mm/dd"
+      maxlength="10"
+    >
+
+    <div class="date-error"></div>
+  </div>
+
+  <button
+    class="date-delete-button"s
+    onclick="removeDateInput(this)">
+    削除
+  </button>
+`;
+
+  container.appendChild(row);
+
+  const input = row.querySelector(".date-input");
+
+  input.addEventListener("blur", () => {
+    normalizeDateInput(input);
+  });
+
+  input.addEventListener("keydown", (event) => {
+
+    if (event.key === "Enter") {
+
+      event.preventDefault();
+
+      input.blur();
+
+    }
+
+  });
+
+}
+
+function normalizeDateInput(input) {
+
+  const error =
+    input.parentElement.querySelector(".date-error");
+
+  // 空欄は許可
+  if (input.value.trim() === "") {
+    input.classList.remove("input-error");
+    error.textContent = "";
+    error.classList.remove("show");
+    return;
+  }
+
+  const formatted = normalizeDate(input.value);
+
+  if (formatted) {
+
+    input.value = formatted;
+
+    input.classList.remove("input-error");
+
+    error.textContent = "";
+    error.classList.remove("show");
+
+  } else {
+
+    input.classList.add("input-error");
+
+    error.textContent = "正しい日付を入力してください。";
+    error.classList.add("show");
+
+  }
+
+}
+
+function normalizeDate(value) {
+
+  const m = value.trim().match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/);
+
+  if (!m) return null;
+
+  const y = Number(m[1]);
+  const month = Number(m[2]);
+  const day = Number(m[3]);
+
+  const d = new Date(y, month - 1, day);
+
+  if (
+    d.getFullYear() !== y ||
+    d.getMonth() !== month - 1 ||
+    d.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return `${y}/${String(month).padStart(2, "0")}/${String(day).padStart(2, "0")}`;
+}
+
+function removeDateInput(button) {
+
+  button.parentElement.remove();
 
 }
 
