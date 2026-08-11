@@ -1,3 +1,7 @@
+//========================================
+// 初期化・キャッシュ
+//========================================
+
 document.addEventListener("DOMContentLoaded", async () => {
   const profile = await getCurrentProfile();
 
@@ -10,13 +14,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   await loadFestivalSettings();
 });
 
-//========================================
-// キャッシュ
-//========================================
-
 let festivalInfo = null;
 
-// 学祭情報を取得してキャッシュ
+//========================================
+// 学園祭情報の取得・表示
+//========================================
+
+// 学園祭情報を取得してキャッシュ
 async function loadFestivalInfo() {
 
   // settings取得
@@ -61,10 +65,7 @@ async function loadFestivalInfo() {
 
 }
 
-//========================================
-// 画面表示
-//========================================
-
+// 設定画面に学園祭名・日程を表示
 async function loadFestivalSettings() {
 
   document.getElementById("currentFestivalName").textContent =
@@ -90,6 +91,7 @@ async function loadFestivalSettings() {
   document.getElementById("festivalDates").textContent = dates.map(d => formatDate(d.target_date)).join("、");
 }
 
+// 日付を yyyy/mm/dd 形式に整形
 function formatDate(dateString) {
   if (!dateString) { return ""; }
   const d = new Date(dateString);
@@ -99,10 +101,12 @@ function formatDate(dateString) {
   return `${y}/${m}/${day}`;
 }
 
+
 //========================================
-// ボタン
+// 学園祭変更
 //========================================
 
+// 学園祭変更モーダルを開く
 function changeFestival() {
 
   document.getElementById("currentFestivalText").textContent =
@@ -115,7 +119,7 @@ function changeFestival() {
 
 }
 
-// プルダウン生成
+// 学園祭の選択肢を生成
 function loadFestivalSelect() {
 
   const select = document.getElementById("festivalSelect");
@@ -133,12 +137,12 @@ function loadFestivalSelect() {
 
 }
 
+// 学園祭変更モーダルを閉じる
 function closeFestivalModal() {
-
   document.getElementById("festivalModal").style.display = "none";
-
 }
 
+// 学園祭変更を保存
 async function confirmFestivalChange() {
 
   const festivalId = Number(
@@ -170,18 +174,25 @@ async function confirmFestivalChange() {
   showToast("現在の学園祭を変更しました。");
 }
 
+// 新しい学園祭追加モーダルを開く
 function openAddFestivalModal() {
 
   // TODO
 
 }
 
+//========================================
+// 日程編集
+//========================================
+
+// 日程編集モーダルを開く
 async function editFestivalDates() {
   loadDateFestivalSelect();
   await loadFestivalDatesForEdit();
   document.getElementById("dateEditModal").style.display = "flex";
 }
 
+// 編集対象の学園祭の選択肢を生成
 function loadDateFestivalSelect() {
 
   const select = document.getElementById("dateFestivalSelect");
@@ -191,7 +202,6 @@ function loadDateFestivalSelect() {
   festivalInfo.festivals.forEach(festival => {
 
     const option = document.createElement("option");
-
     option.value = festival.festival_id;
     option.textContent = festival.festival_name;
 
@@ -200,16 +210,13 @@ function loadDateFestivalSelect() {
     }
 
     select.appendChild(option);
-
   });
 
 }
 
 async function loadFestivalDatesForEdit() {
 
-  const festivalId = Number(
-    document.getElementById("dateFestivalSelect").value
-  );
+  const festivalId = Number(document.getElementById("dateFestivalSelect").value);
 
   const {
     data,
@@ -226,23 +233,24 @@ async function loadFestivalDatesForEdit() {
     return;
   }
 
-  const container =
-    document.getElementById("dateInputContainer");
-
+  const container = document.getElementById("dateInputContainer");
   container.innerHTML = "";
-
   data.forEach(date => {
-
     addDateInput(date.target_date);
-
   });
 
+  updateDateButtonState();
 }
 
+// 日程入力欄を追加
 function addDateInput(value = "") {
 
-  const container =
-    document.getElementById("dateInputContainer");
+  const container = document.getElementById("dateInputContainer");
+
+  // 7日ある場合は追加しない
+  if (container.children.length >= 7) {
+    return;
+  }
 
   const row = document.createElement("div");
 
@@ -262,7 +270,7 @@ function addDateInput(value = "") {
   </div>
 
   <button
-    class="date-delete-button"s
+    class="date-delete-button"
     onclick="removeDateInput(this)">
     削除
   </button>
@@ -288,8 +296,11 @@ function addDateInput(value = "") {
 
   });
 
+  updateDateButtonState();
+
 }
 
+// 日程入力値をチェック・整形
 function normalizeDateInput(input) {
 
   const error =
@@ -325,6 +336,7 @@ function normalizeDateInput(input) {
 
 }
 
+// 日付として正しいかチェックして yyyy/mm/dd に整形
 function normalizeDate(value) {
 
   const m = value.trim().match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/);
@@ -348,25 +360,192 @@ function normalizeDate(value) {
   return `${y}/${String(month).padStart(2, "0")}/${String(day).padStart(2, "0")}`;
 }
 
+// 日程入力欄を削除
 function removeDateInput(button) {
+
+  const container = document.getElementById("dateInputContainer");
+
+  // 1日しかない場合は削除しない
+  if (container.children.length <= 1) {
+    return;
+  }
 
   button.parentElement.remove();
 
+  updateDateButtonState();
+
 }
 
+// 日程追加・削除ボタンの有効・無効を更新
+function updateDateButtonState() {
+
+  const container = document.getElementById("dateInputContainer");
+  const addButton = document.getElementById("addDateButton");
+  const rows = container.children.length;
+
+  // 削除ボタン
+  const deleteButtons =
+    container.querySelectorAll(".date-delete-button");
+
+  deleteButtons.forEach(button => {
+    button.disabled = rows <= 1;
+  });
+
+  // 追加ボタン
+  addButton.disabled = rows >= 7;
+
+}
+
+// 日程を保存
+async function confirmDateEdit() {
+
+  const inputs = document.querySelectorAll("#dateInputContainer .date-input");
+
+  //========== 1. 想定外のエラーの検出 ==========
+
+  // 日程が0件の場合
+  if (inputs.length === 0) {
+    alert("日程を1日以上登録してください。");
+    return;
+  }
+
+  // 日程が7件より多い場合
+  if (inputs.length > 7) {
+    alert("日程は7日以内にしてください。");
+    return;
+  }
+
+  const dates = [];
+  let hasError = false;
+
+  //========== 2. 入力チェック ==========
+  inputs.forEach(input => {
+
+    const error =
+      input.parentElement.querySelector(".date-error");
+
+    const value = input.value.trim();
+
+    // エラー表示をリセット
+    input.classList.remove("input-error");
+    error.textContent = "";
+    error.classList.remove("show");
+
+    // 空欄チェック
+    if (value === "") {
+
+      input.classList.add("input-error");
+      error.textContent = "日付を入力してください。";
+      error.classList.add("show");
+
+      hasError = true;
+      return;
+    }
+
+    // 日付チェック
+    const formatted = normalizeDate(value);
+
+    if (!formatted) {
+
+      input.classList.add("input-error");
+      error.textContent = "正しい日付を入力してください。";
+      error.classList.add("show");
+
+      hasError = true;
+      return;
+    }
+
+    // 正規化
+    input.value = formatted;
+    dates.push(formatted);
+
+  });
+
+  //========== 3. 重複チェック ==========
+  const duplicatedDates = dates.filter(
+    (date, index) => dates.indexOf(date) !== index
+  );
+
+  if (duplicatedDates.length > 0) {
+
+    inputs.forEach(input => {
+
+      const value = input.value.trim();
+
+      if (duplicatedDates.includes(value)) {
+
+        const error =
+          input.parentElement.querySelector(".date-error");
+
+        input.classList.add("input-error");
+        error.textContent = "同じ日付が重複しています。";
+        error.classList.add("show");
+
+        hasError = true;
+      }
+
+    });
+
+  }
+
+  // エラーがあれば保存しない
+  if (hasError) {
+    return;
+  }
+
+  //========== 4. 保存 ==========
+  const festivalId = Number(
+    document.getElementById("dateFestivalSelect").value
+  );
+
+  // 既存の日程を全削除
+  const { error: deleteError } = await mySupabase
+    .from("festival_dates")
+    .delete()
+    .eq("festival_id", festivalId);
+
+  if (deleteError) {
+    console.error(deleteError);
+    alert("既存の日程の削除に失敗しました。");
+    return;
+  }
+
+  // 新しい日程を登録
+  const insertData = dates.map(date => ({
+    festival_id: festivalId,
+    target_date: date
+  }));
+
+  const { error: insertError } = await mySupabase
+    .from("festival_dates")
+    .insert(insertData);
+
+  if (insertError) {
+    console.error(insertError);
+    alert("日程の保存に失敗しました。");
+    return;
+  }
+
+  // 画面の日程を更新
+  await loadFestivalSettings();
+
+  // モーダルを閉じる
+  closeDateEditModal();
+
+  // トースト表示
+  showToast("学園祭の日程を変更しました。");
+
+}
+
+// 日程編集モーダルを閉じる
 function closeDateEditModal() {
-
   document.getElementById("dateEditModal").style.display = "none";
-
-}
-
-function confirmDateEdit() {
-
-  // TODO
-
 }
 
 
+//========================================
+// トースト
+//========================================
 
 let toastTimer = null;
 

@@ -231,6 +231,22 @@
   background: #fee2e2;
 }
 
+/* 無効状態 */
+.date-delete-button:disabled,
+.add-festival-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 無効状態ではホバー効果を無効化 */
+.date-delete-button:disabled:hover {
+  background: #fef2f2;
+}
+
+.add-festival-button:disabled:hover {
+  background: #f8fafc;
+}
+
 /*========================
   Toast
 ========================*/
