@@ -110,7 +110,7 @@
     // Supabaseから取得した売上データ
     let allSalesData = [];
 
-    // display_slotsテーブルの内容. 売上表に表示する商品構成を保持する
+    // festival_productsテーブルの内容. 売上表に表示する商品構成を保持する
     let festivalProducts = [];
 
     // registers テーブルの内容. レジ切り替えボタンの生成に使用する
@@ -387,7 +387,7 @@
       tbody.innerHTML = "";
       thead.innerHTML = "";
 
-      // display_slots に登録されている商品だけを表示対象とする
+      // festival_products に登録されている商品だけを表示対象とする
       const activeSlots = festivalProducts.filter(slot => slot.product_id !== null);
 
       // --------------------------

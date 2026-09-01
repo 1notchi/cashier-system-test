@@ -1,6 +1,8 @@
 document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("cancelDeleteButton").addEventListener("click", closeDeleteModal);
   document.getElementById("confirmDeleteButton").addEventListener("click", confirmDelete);
+  document.getElementById("cancelRestoreButton").addEventListener("click", closeRestoreModal);
+  document.getElementById("confirmRestoreButton").addEventListener("click", confirmRestore);
   setupHistoryTableEvents();
   await loadHistory();
 });
@@ -10,6 +12,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 // ==========================
 
 let deleteTargetSaleId = null;
+let restoreTargetSaleId = null;
 
 async function loadHistory() {
   // 1. 現在開催中のfestival_idを取得
@@ -168,7 +171,21 @@ function renderTableHeader(festivalProductsData) {
 // 会計履歴の表本体を描画する(表示専任)
 function renderHistory(salesData, festivalProductsData, saleItemsData) {
   const tbody = document.getElementById("historyTableBody");
+  const tableWrapper = document.getElementById("historyTableWrapper");
+  const emptyMessage = document.getElementById("emptyHistoryMessage");
+
   tbody.innerHTML = "";
+
+  // 会計履歴が存在しない場合
+  if (!salesData || salesData.length === 0) {
+    tableWrapper.style.display = "none";
+    emptyMessage.classList.add("show");
+    return;
+  }
+
+  // 会計履歴が存在する場合
+  tableWrapper.style.display = "";
+  emptyMessage.classList.remove("show");
 
   const quantityMap = buildQuantityMap(saleItemsData);
 
@@ -209,25 +226,40 @@ function buildRowHtml(sale, festivalProductsData, quantityMap) {
     rowHtml += `<td>${qty}</td>`;
   });
 
-  rowHtml += `
-        <td>
-          <button
-            type="button"
-            class="edit-button"
-            data-sale-id="${sale.sale_id}"
-            ${sale.is_deleted ? "disabled" : ""}>
-            編集
-          </button>
+  if (sale.is_deleted) {
+    rowHtml += `
+    <td>
+      <div class="action-buttons">
+        <button
+          type="button"
+          class="restore-button"
+          data-sale-id="${sale.sale_id}">
+          復活
+        </button>
+      </div>
+    </td>
+  `;
+  } else {
+    rowHtml += `
+    <td>
+      <div class="action-buttons">
+        <button
+          type="button"
+          class="edit-button"
+          data-sale-id="${sale.sale_id}">
+          編集
+        </button>
 
-          <button
-            type="button"
-            class="delete-button"
-            data-sale-id="${sale.sale_id}"
-            ${sale.is_deleted ? "disabled" : ""}>
-            削除
-          </button>
-        </td>
-      `;
+        <button
+          type="button"
+          class="delete-button"
+          data-sale-id="${sale.sale_id}">
+          削除
+        </button>
+      </div>
+    </td>
+  `;
+  }
 
   return rowHtml;
 }
@@ -248,6 +280,12 @@ function setupHistoryTableEvents() {
     const deleteButton = event.target.closest(".delete-button");
     if (deleteButton) {
       onDeleteClick(deleteButton.dataset.saleId);
+      return;
+    }
+
+    const restoreButton = event.target.closest(".restore-button");
+    if (restoreButton) {
+      onRestoreClick(restoreButton.dataset.saleId);
       return;
     }
   });
@@ -308,6 +346,61 @@ async function confirmDelete() {
 function closeDeleteModal() {
   deleteTargetSaleId = null;
   document.getElementById("deleteModal").classList.remove("show");
+}
+
+// 復活ボタン押下時の処理
+function onRestoreClick(saleId) {
+  restoreTargetSaleId = saleId;
+  document.getElementById("restoreModal").classList.add("show");
+}
+
+// 復活確定時の処理
+async function confirmRestore() {
+  if (restoreTargetSaleId === null) {
+    return;
+  }
+
+  const targetSaleId = restoreTargetSaleId;
+
+  // salesを復活済みの状態に更新
+  const { error: salesError } = await mySupabase
+    .from("sales")
+    .update({
+      is_deleted: false,
+      deleted_by: null
+    })
+    .eq("sale_id", targetSaleId)
+    .eq("is_deleted", true);
+
+  if (salesError) {
+    console.error(salesError);
+    alert("会計の復活に失敗しました。");
+    return;
+  }
+
+  // 対象会計に紐づくcancelledの明細だけをactiveへ戻す
+  const { error: itemsError } = await mySupabase
+    .from("sale_items")
+    .update({
+      status: "active"
+    })
+    .eq("sale_id", targetSaleId)
+    .eq("status", "cancelled");
+
+  if (itemsError) {
+    console.error(itemsError);
+    alert("会計明細の復活に失敗しました。");
+    return;
+  }
+
+  closeRestoreModal();
+  await loadHistory();
+}
+
+// 復活確認モーダルを閉じる処理
+function closeRestoreModal() {
+  restoreTargetSaleId = null;
+  document.getElementById("restoreModal").classList.remove("show");
 }
 
 // ==========================

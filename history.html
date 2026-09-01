@@ -19,10 +19,9 @@
   <div id="header-container"></div>
 
   <main class="page-content">
-    <h1>NFレジシステム 会計履歴</h1>
 
     <div class="history-container">
-      <div class="table-wrapper">
+      <div id="historyTableWrapper" class="table-wrapper">
         <table class="history-table">
           <thead>
             <tr id="historyTableHeaderRow">
@@ -36,6 +35,10 @@
           <tbody id="historyTableBody">
           </tbody>
         </table>
+      </div>
+
+      <div id="emptyHistoryMessage" class="empty-history-message">
+        会計履歴が存在しません
       </div>
     </div>
   </main>
@@ -51,6 +54,23 @@
         </button>
 
         <button id="cancelDeleteButton">
+          キャンセル
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 復活確認モーダル -->
+  <div id="restoreModal" class="modal-overlay">
+    <div class="modal">
+      <p>本当に復活していいですか？</p>
+
+      <div class="modal-buttons">
+        <button id="confirmRestoreButton" type="button" class="restore-button">
+          復活
+        </button>
+
+        <button id="cancelRestoreButton" type="button">
           キャンセル
         </button>
       </div>

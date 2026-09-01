@@ -73,9 +73,10 @@
   color: #9ca3af;
 }
 
-/* 編集・削除ボタン */
+/* 編集・削除・復活ボタン */
 .edit-button,
-.delete-button {
+.delete-button,
+.restore-button {
   border: none;
   padding: 6px 14px;
   font-size: 13px;
@@ -83,32 +84,43 @@
   border-radius: 6px;
   cursor: pointer;
   transition: background 0.2s;
-  margin: 0 3px;
+}
+
+.action-buttons {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
 }
 
 .edit-button {
   background-color: #ebf8ff;
   color: #2b6cb0;
+  width: 64px;
 }
 
-.edit-button:not(:disabled):hover {
+.edit-button:hover {
   background-color: #bee3f8;
 }
 
 .delete-button {
   background-color: #fff5f5;
   color: #c53030;
+  width: 64px;
 }
 
-.delete-button:not(:disabled):hover {
+.delete-button:hover {
   background-color: #fed7d7;
 }
 
-.edit-button:disabled,
-.delete-button:disabled {
-  background-color: #e5e7eb;
-  color: #9ca3af;
-  cursor: not-allowed;
+.restore-button {
+  width: 134px;
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.restore-button:hover {
+  background-color: #fde68a;
 }
 
 .modal-overlay {
@@ -164,4 +176,30 @@
 
 .modal-buttons button:not(.delete-button):hover {
   background: #edf2f7;
+}
+
+.modal-buttons button.restore-button {
+  width: 134px;
+  padding: 6px 14px;
+  border: none;
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.modal-buttons button.restore-button:hover {
+  background-color: #fde68a;
+}
+
+.empty-history-message {
+  display: none;
+  min-height: 240px;
+  justify-content: center;
+  align-items: center;
+  color: #718096;
+  font-size: 16px;
+  text-align: center;
+}
+
+.empty-history-message.show {
+  display: flex;
 }
