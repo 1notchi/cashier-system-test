@@ -3,6 +3,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("confirmDeleteButton").addEventListener("click", confirmDelete);
   document.getElementById("cancelRestoreButton").addEventListener("click", closeRestoreModal);
   document.getElementById("confirmRestoreButton").addEventListener("click", confirmRestore);
+  document.getElementById("cancelEditButton").addEventListener("click", closeEditModal);
+
   setupHistoryTableEvents();
   await loadHistory();
 });
@@ -13,6 +15,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 let deleteTargetSaleId = null;
 let restoreTargetSaleId = null;
+let editTargetSaleId = null;
+let currentFestivalProducts = [];
+let currentQuantityMap = {};
 
 async function loadHistory() {
   // 1. 現在開催中のfestival_idを取得
@@ -52,7 +57,10 @@ async function loadHistory() {
     .select(`
           product_id,
           display_order,
-          products ( abbreviation )
+          products (
+            abbreviation,
+            product_name
+          )
         `)
     .eq("festival_id", festivalId)
     .order("display_order", { ascending: true });
@@ -67,6 +75,8 @@ async function loadHistory() {
   const validFestivalProducts = festivalProductsData.filter(
     fp => fp.product_id !== null
   );
+
+  currentFestivalProducts = validFestivalProducts;
 
   // 4. 開催日の範囲条件をつくる
   const dateFilters = datesData.map(row => {
@@ -176,6 +186,9 @@ function renderHistory(salesData, festivalProductsData, saleItemsData) {
 
   tbody.innerHTML = "";
 
+  const quantityMap = buildQuantityMap(saleItemsData);
+  currentQuantityMap = quantityMap;
+
   // 会計履歴が存在しない場合
   if (!salesData || salesData.length === 0) {
     tableWrapper.style.display = "none";
@@ -186,8 +199,6 @@ function renderHistory(salesData, festivalProductsData, saleItemsData) {
   // 会計履歴が存在する場合
   tableWrapper.style.display = "";
   emptyMessage.classList.remove("show");
-
-  const quantityMap = buildQuantityMap(saleItemsData);
 
   // 古い順に通し番号を1から振る
   const numbered = salesData.map((sale, index) => ({
@@ -291,9 +302,114 @@ function setupHistoryTableEvents() {
   });
 }
 
-// 編集ボタン押下時の処理(未実装)
+function createEditProductRow({
+  productName,
+  max,
+  productId = null,
+  fieldName = null,
+  initialValue = ""
+}) {
+  const row = document.createElement("label");
+  row.className = "edit-product-row";
+
+  const nameElement = document.createElement("span");
+  nameElement.className = "edit-product-name";
+  nameElement.textContent = productName;
+
+  const input = document.createElement("input");
+  input.type = "number";
+  input.className = "edit-product-input";
+  input.min = "0";
+  input.max = String(max);
+  input.step = "1";
+  input.inputMode = "numeric";
+  input.value = initialValue;
+
+  if (productId !== null) {
+    input.dataset.productId = productId;
+  }
+
+  if (fieldName !== null) {
+    input.dataset.field = fieldName;
+  }
+
+  input.setAttribute("aria-label", `${productName}の数量`);
+
+  // 小数、負数、指数表記などに使用するキーを受け付けない
+  input.addEventListener("keydown", event => {
+    if ([".", "-", "+", "e", "E"].includes(event.key)) {
+      event.preventDefault();
+    }
+  });
+
+  // 貼り付けや数値入力ボタンによる範囲外入力にも対応
+  input.addEventListener("input", () => {
+    if (input.value === "") {
+      return;
+    }
+
+    const value = Number(input.value);
+
+    if (!Number.isInteger(value) || value < 0) {
+      input.value = "";
+      return;
+    }
+
+    if (value > max) {
+      input.value = String(max);
+    }
+  });
+
+  row.appendChild(nameElement);
+  row.appendChild(input);
+
+  return row;
+}
+
+function renderEditProductList(festivalProductsData, quantityMap, saleId) {
+  const productList = document.getElementById("editProductList");
+  productList.innerHTML = "";
+
+  const saleQuantities = quantityMap[saleId] || {};
+
+  festivalProductsData.forEach(fp => {
+    const productName = fp.products
+      ? fp.products.product_name
+      : "";
+
+    const quantity = saleQuantities[fp.product_id] ?? 0;
+
+    const row = createEditProductRow({
+      productName,
+      max: 20,
+      productId: fp.product_id,
+      initialValue: quantity
+    });
+
+    productList.appendChild(row);
+  });
+
+  // 「その他」は現段階では初期値を設定しない
+  const otherRow = createEditProductRow({
+    productName: "その他",
+    max: 10000,
+    fieldName: "other"
+  });
+
+  productList.appendChild(otherRow);
+}
+
+// 編集ボタン押下時の処理
 function onEditClick(saleId) {
-  // TODO: 編集画面への遷移、または編集モーダルの表示などを実装予定
+  editTargetSaleId = saleId;
+  renderEditProductList(currentFestivalProducts, currentQuantityMap, saleId);
+  document.getElementById("editModal").classList.add("show");
+}
+
+// 編集モーダルを閉じる処理
+function closeEditModal() {
+  editTargetSaleId = null;
+  document.getElementById("editModal").classList.remove("show");
 }
 
 // 削除ボタン押下時の処理
