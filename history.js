@@ -18,6 +18,7 @@ let restoreTargetSaleId = null;
 let editTargetSaleId = null;
 let currentFestivalProducts = [];
 let currentQuantityMap = {};
+let currentOtherProductMap = {};
 
 async function loadHistory() {
   // 1. 現在開催中のfestival_idを取得
@@ -115,7 +116,7 @@ async function loadHistory() {
   if (saleIds.length > 0) {
     const { data: itemsData, error: itemsError } = await mySupabase
       .from("sale_items")
-      .select("sale_id, product_id, quantity")
+      .select("sale_id, product_id, quantity, unit_price, other_product_name")
       .eq("status", "active")
       .in("sale_id", saleIds);
 
@@ -153,6 +154,23 @@ function buildQuantityMap(saleItemsData) {
   return quantityMap;
 }
 
+function buildOtherProductMap(saleItemsData) {
+  const otherProductMap = {};
+
+  saleItemsData.forEach(item => {
+    if (Number(item.product_id) !== 0) {
+      return;
+    }
+
+    otherProductMap[item.sale_id] = {
+      productName: item.other_product_name ?? "",
+      unitPrice: item.unit_price ?? ""
+    };
+  });
+
+  return otherProductMap;
+}
+
 // ==========================
 // 表の描画
 // ==========================
@@ -188,6 +206,7 @@ function renderHistory(salesData, festivalProductsData, saleItemsData) {
 
   const quantityMap = buildQuantityMap(saleItemsData);
   currentQuantityMap = quantityMap;
+  currentOtherProductMap = buildOtherProductMap(saleItemsData);
 
   // 会計履歴が存在しない場合
   if (!salesData || salesData.length === 0) {
@@ -366,7 +385,79 @@ function createEditProductRow({
   return row;
 }
 
-function renderEditProductList(festivalProductsData, quantityMap, saleId) {
+function createEditOtherProductRow(
+  initialProductName,
+  initialUnitPrice
+) {
+  const row = document.createElement("div");
+  row.className = "edit-other-product-row";
+
+  const nameElement = document.createElement("span");
+  nameElement.className = "edit-product-name";
+  nameElement.textContent = "その他：";
+
+  // その他の商品名
+  const nameInput = document.createElement("input");
+  nameInput.type = "text";
+  nameInput.className =
+    "edit-product-input edit-other-product-name-input";
+  nameInput.value = initialProductName;
+  nameInput.maxLength = 20;
+  nameInput.dataset.field = "otherProductName";
+  nameInput.setAttribute("aria-label", "その他の商品名");
+
+  // その他の数値
+  const quantityInput = document.createElement("input");
+  quantityInput.type = "number";
+  quantityInput.className = "edit-product-input edit-other-product-quantity-input";
+  quantityInput.min = "0";
+  quantityInput.max = "10000";
+  quantityInput.step = "1";
+  quantityInput.inputMode = "numeric";
+  quantityInput.value = initialUnitPrice;
+  quantityInput.dataset.productId = "0";
+  quantityInput.dataset.field = "otherUnitPrice";
+  quantityInput.setAttribute(
+    "aria-label",
+    "その他商品の単価"
+  );
+
+  quantityInput.addEventListener("keydown", event => {
+    if ([".", "-", "+", "e", "E"].includes(event.key)) {
+      event.preventDefault();
+    }
+  });
+
+  quantityInput.addEventListener("input", () => {
+    if (quantityInput.value === "") {
+      return;
+    }
+
+    const value = Number(quantityInput.value);
+
+    if (!Number.isInteger(value) || value < 0) {
+      quantityInput.value = "";
+      return;
+    }
+
+    if (value > 10000) {
+      quantityInput.value = "10000";
+    }
+  });
+
+  row.appendChild(nameElement);
+  row.appendChild(nameInput);
+  row.appendChild(quantityInput);
+
+  return row;
+}
+
+function renderEditProductList(
+  festivalProductsData,
+  quantityMap,
+  otherProductMap,
+  saleId
+) {
   const productList = document.getElementById("editProductList");
   productList.innerHTML = "";
 
@@ -389,20 +480,15 @@ function renderEditProductList(festivalProductsData, quantityMap, saleId) {
     productList.appendChild(row);
   });
 
-  // 「その他」は現段階では初期値を設定しない
-  const otherRow = createEditProductRow({
-    productName: "その他",
-    max: 10000,
-    fieldName: "other"
-  });
-
+  const otherProduct = otherProductMap[saleId] || { productName: "", unitPrice: "" };
+  const otherRow = createEditOtherProductRow(otherProduct.productName, otherProduct.unitPrice);
   productList.appendChild(otherRow);
 }
 
 // 編集ボタン押下時の処理
 function onEditClick(saleId) {
   editTargetSaleId = saleId;
-  renderEditProductList(currentFestivalProducts, currentQuantityMap, saleId);
+  renderEditProductList(currentFestivalProducts, currentQuantityMap, currentOtherProductMap, saleId);
   document.getElementById("editModal").classList.add("show");
 }
 
