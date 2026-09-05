@@ -4,6 +4,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("cancelRestoreButton").addEventListener("click", closeRestoreModal);
   document.getElementById("confirmRestoreButton").addEventListener("click", confirmRestore);
   document.getElementById("cancelEditButton").addEventListener("click", closeEditModal);
+  document.getElementById("saveEditButton").addEventListener("click", saveEditChanges);
 
   setupHistoryTableEvents();
   await loadHistory();
@@ -56,13 +57,14 @@ async function loadHistory() {
   const { data: festivalProductsData, error: fpError } = await mySupabase
     .from("festival_products")
     .select(`
-          product_id,
-          display_order,
-          products (
-            abbreviation,
-            product_name
-          )
-        `)
+    product_id,
+    display_order,
+    price,
+    products (
+      abbreviation,
+      product_name
+    )
+  `)
     .eq("festival_id", festivalId)
     .order("display_order", { ascending: true });
 
@@ -490,6 +492,138 @@ function onEditClick(saleId) {
   editTargetSaleId = saleId;
   renderEditProductList(currentFestivalProducts, currentQuantityMap, currentOtherProductMap, saleId);
   document.getElementById("editModal").classList.add("show");
+}
+
+// 編集内容の保存
+async function saveEditChanges() {
+  if (editTargetSaleId === null) {
+    return;
+  }
+
+  const saveButton = document.getElementById("saveEditButton");
+  saveButton.disabled = true;
+
+  try {
+    const profile = await getCurrentProfile();
+
+    if (!profile) {
+      alert("ログインユーザーを取得できませんでした。");
+      return;
+    }
+
+    const newSaleItems = [];
+
+    // 通常商品を登録データへ変換する
+    const productInputs = document.querySelectorAll(
+      "#editProductList .edit-product-row " +
+      ".edit-product-input[data-product-id]"
+    );
+
+    productInputs.forEach(input => {
+      if (input.value === "") {
+        return;
+      }
+
+      const quantity = Number(input.value);
+
+      // 0または不正な値の商品は登録しない
+      if (
+        !Number.isInteger(quantity) ||
+        quantity <= 0 ||
+        quantity > 20
+      ) {
+        return;
+      }
+
+      const festivalProduct = currentFestivalProducts.find(
+        fp => String(fp.product_id) === input.dataset.productId
+      );
+
+      if (!festivalProduct) {
+        return;
+      }
+
+      newSaleItems.push({
+        sale_id: editTargetSaleId,
+        product_id: festivalProduct.product_id,
+        quantity,
+        unit_price: festivalProduct.price,
+        other_product_name: null,
+        status: "active",
+        created_by: profile.id
+      });
+    });
+
+    // 「その他」の入力内容を取得する
+    const otherNameInput = document.querySelector(
+      '#editProductList [data-field="otherProductName"]'
+    );
+
+    const otherUnitPriceInput = document.querySelector(
+      '#editProductList [data-field="otherUnitPrice"]'
+    );
+
+    const otherProductName =
+      otherNameInput?.value.trim() ?? "";
+
+    const otherUnitPrice =
+      otherUnitPriceInput?.value === ""
+        ? 0
+        : Number(otherUnitPriceInput.value);
+
+    // 商品名があり、金額が正の整数の場合のみ登録する
+    if (
+      otherProductName !== "" &&
+      Number.isInteger(otherUnitPrice) &&
+      otherUnitPrice > 0 &&
+      otherUnitPrice <= 10000
+    ) {
+      newSaleItems.push({
+        sale_id: editTargetSaleId,
+        product_id: 0,
+        quantity: 1,
+        unit_price: otherUnitPrice,
+        other_product_name: otherProductName,
+        status: "active",
+        created_by: profile.id
+      });
+    }
+
+    // 現在有効な明細をすべて replaced にする
+    const { error: replaceError } = await mySupabase
+      .from("sale_items")
+      .update({
+        status: "replaced"
+      })
+      .eq("sale_id", editTargetSaleId)
+      .eq("status", "active");
+
+    if (replaceError) {
+      console.error(replaceError);
+      alert("変更前の会計明細を更新できませんでした。");
+      return;
+    }
+
+    // 数量が正の商品が1つもなければ、新規明細は作成しない
+    if (newSaleItems.length > 0) {
+      const { error: insertError } = await mySupabase
+        .from("sale_items")
+        .insert(newSaleItems);
+
+      if (insertError) {
+        console.error(insertError);
+        alert("変更後の会計明細を登録できませんでした。");
+        return;
+      }
+    }
+
+    closeEditModal();
+    await loadHistory();
+
+    Toast.success("編集内容を保存しました。");
+  } finally {
+    saveButton.disabled = false;
+  }
 }
 
 // 編集モーダルを閉じる処理

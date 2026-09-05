@@ -1,0 +1,480 @@
+// ========================================
+//     状態管理用のグローバル変数
+// ========================================
+
+//現在選択中のレジ種別 ('all' の場合は全レジを対象として集計する)
+let currentRegisterMode = 'all';
+
+//表示モード ('qty' : 販売個数表示, 'amount' : 売上金額表示)
+let currentViewMode = 'qty';
+
+// Supabaseから取得した売上データ
+let allSalesData = [];
+
+// festival_productsテーブルの内容. 売上表に表示する商品構成を保持する
+let festivalProducts = [];
+
+// registers テーブルの内容. レジ切り替えボタンの生成に使用する
+let registers = [];
+
+//festival_dates テーブルから取得した集計対象日
+//形式: ["2026/11/19", "2026/11/20", ...]
+let targetDates = [];
+
+// ========================================
+//     画面初期化処理
+// ========================================
+
+window.onload = async () => {
+
+  // 今日の日付をサマリー欄に表示
+  const now = new Date();
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const dd = String(now.getDate()).padStart(2, '0');
+
+  document.getElementById('txtTodayLabel').innerText = `(${mm}/${dd})`;
+
+  // 画面表示に必要なマスターデータを取得
+  await loadMasterData();
+
+  // レジ切替ボタンを生成
+  renderRegisterButtons();
+
+  // 売上データを取得して画面描画
+  await fetchSalesData();
+
+};
+
+// ==================================================
+//     売上データ取得・変換処理
+// ==================================================
+
+//売上画面で使用する各種マスターデータを取得する
+//取得対象:festival_products（表示対象商品）, registers（レジ一覧）, festival_dates（集計対象日）
+async function loadMasterData() {
+
+  // 設定を取得
+  const { data: settingsData, error: settingsError }
+    = await mySupabase
+      .from('settings')
+      .select('current_festival_id')
+      .single();
+
+  if (settingsError) {
+    throw settingsError;
+  }
+
+  // 現在の学祭の商品一覧を取得
+  const {
+    data: slotData,
+    error: slotError
+  } = await mySupabase
+    .from('festival_products')
+    .select(`festival_product_id, display_order, product_id, products (product_name,abbreviation)`)
+    .eq('festival_id', settingsData.current_festival_id)
+    .order('display_order');
+
+  if (slotError) {
+    throw slotError;
+  }
+
+  festivalProducts = slotData;
+
+  // レジ一覧を取得
+  const {
+    data: registerData,
+    error: registerError
+  } = await mySupabase
+    .from('registers')
+    .select('*')
+    .order('register_id');
+
+  if (registerError) {
+    throw registerError;
+  }
+
+  registers = registerData;
+
+  // 学祭期間の日付一覧を取得
+  const { data: festivalDateData, error: festivalDateError }
+    = await mySupabase
+      .from('festival_dates')
+      .select('target_date')
+      .eq('festival_id', settingsData.current_festival_id)
+      .order('target_date');
+
+  if (festivalDateError) {
+    throw festivalDateError;
+  }
+
+  targetDates = festivalDateData.map(row => row.target_date.replaceAll('-', '/'));
+
+  console.log(festivalProducts);
+}
+
+//Supabaseから取得した売上データを, ダッシュボードで扱いやすい形式へ変換する
+function convertSalesData(rawSales) {
+
+  return rawSales.map(sale => {
+
+    const items = {};
+    let otherPrice = 0;
+    let totalPrice = 0;
+
+    sale.sale_items.forEach(item => {
+      const amount = item.quantity * item.unit_price;
+      totalPrice += amount;
+      if (item.product_id === 0) {
+        otherPrice += amount;
+      } else {
+        // 商品別集計用データを初期化
+        if (!items[item.product_id]) {
+          items[item.product_id] = { quantity: 0, amount: 0 };
+        }
+        items[item.product_id].quantity += item.quantity;
+        items[item.product_id].amount += amount;
+      }
+    });
+
+    return {
+      timestamp: formatDateJST(sale.sold_at),
+      register: sale.registers.register_name,
+      items,
+      otherPrice,
+      totalPrice
+    };
+  });
+}
+
+//  Supabaseから売上データを取得し, テーブルおよびサマリー表示を更新
+async function fetchSalesData() {
+  const tbody = document.getElementById('matrixTableBody');
+  if (tbody) {
+    tbody.innerHTML = `
+          <tr>
+            <td colspan="${getTableColumnCount()}"
+              style="padding:40px;color:#a0aec0;">
+              🔄 データ取得中...
+            </td>
+          </tr>
+        `;
+  }
+
+  const { data, error } =
+    await mySupabase
+      .from('sales')
+      .select(`
+        sale_id,
+        register_id,
+        sold_at,
+        registers (register_name),
+        sale_items (product_id, quantity, unit_price, other_product_name)
+      `)
+      .eq('sale_items.status', 'active')
+      .order('sold_at');
+
+  // 取得失敗時
+  if (error) {
+    console.error(
+      "売上データ取得エラー:",
+      error
+    );
+    if (tbody) {
+      tbody.innerHTML = `
+      <tr>
+        <td colspan="${getTableColumnCount()}"
+        style="padding:40px;color:#e53e3e;">
+        ❌ データ取得失敗
+        </td>
+      </tr>
+      `;
+    }
+    return;
+  }
+
+  // ダッシュボード用データへ変換
+  allSalesData = convertSalesData(data || []);
+
+  // 表を再描画
+  renderMatrixTable();
+
+  // 最終更新時刻を表示
+  const now = new Date();
+  document.getElementById('txtLastUpdate').innerText =
+    `最終更新: ${now.toLocaleTimeString('ja-JP')}`;
+}
+
+// ==================================================
+//     UI操作イベント
+// ==================================================
+
+/**
+ * 表示対象のレジを切り替える。
+ * @param {string} register レジ名（all, NF, 北部祭 など）
+ * @param {HTMLElement} element 押下されたボタン
+ */
+function switchRegister(register, element) {
+  document.querySelectorAll('.segment-btn').forEach(btn => btn.classList.remove('active'));
+  element.classList.add('active');
+  currentRegisterMode = register;
+  renderMatrixTable();
+}
+
+/**
+ * 表示モード（個数 / 金額）を切り替える。
+ * @param {'qty'|'amount'} mode
+ */
+function switchDisplayMode(mode) {
+  document.getElementById('btnModeQty').classList.remove('active');
+  document.getElementById('btnModeAmount').classList.remove('active');
+
+  if (mode === 'qty') {
+    document.getElementById('btnModeQty').classList.add('active');
+  } else {
+    document.getElementById('btnModeAmount').classList.add('active');
+  }
+  currentViewMode = mode;
+  renderMatrixTable();
+}
+
+// ==================================================
+//     売上テーブル・サマリー描画
+// ==================================================
+
+// registersテーブルの内容からレジ切り替えボタンを動的に生成する
+function renderRegisterButtons() {
+
+  const container =
+    document.querySelector(
+      '.segment-container'
+    );
+
+  let html = `
+    <button
+      class="segment-btn active"
+      onclick="switchRegister('all', this)">
+      すべてのレジ
+    </button>
+  `;
+
+  registers.forEach(register => {
+    html += `
+      <button
+        class="segment-btn"
+        onclick="switchRegister(
+          '${register.register_name}',
+          this
+        )">
+        ${register.register_name}
+      </button>
+    `;
+  });
+
+  container.innerHTML = html;
+}
+
+function renderMatrixTable() {
+
+  // ----------------------
+  //   A. 変数の定義
+  // ----------------------
+
+  const thead = document.getElementById('matrixTableHead');
+  const tbody = document.getElementById('matrixTableBody');
+  if (!thead || !tbody) {
+    return;
+  }
+
+  // 前回描画内容をクリア
+  tbody.innerHTML = "";
+  thead.innerHTML = "";
+
+  // festival_products に登録されている商品だけを表示対象とする
+  const activeSlots = festivalProducts.filter(slot => slot.product_id !== null);
+
+  // --------------------------
+  //   B. テーブルヘッダー生成
+  // --------------------------
+  let thHtml = `<tr><th>日付</th>`;
+  activeSlots.forEach(slot => {
+    const label = slot.products.abbreviation || slot.products.product_name;
+    thHtml += `<th>${label}</th>`;
+  });
+  thHtml += `<th>その他</th>`;
+  thHtml += `<th style="background-color: #ebf8ff; color: #2b6cb0;">合計</th></tr>`;
+  thead.innerHTML = thHtml;
+
+  // -------------------------
+  //   C. 集計用変数の初期化
+  // -------------------------
+
+  const activeLength = activeSlots.length;
+
+  // [日付][商品列] の形式で集計する
+  let dailyData = Array.from({ length: targetDates.length }, () => Array(activeLength + 1).fill(0));
+
+  // 各列の合計値
+  let verticalTotal = Array(activeLength + 1).fill(0);
+
+  // 金額モード時の総合計
+  let verticalGrandTotalAmount = 0;
+
+  // サマリーカード用
+  let todayCount = 0;
+  let todayAmount = 0;
+  let totalCount = 0;
+  let totalAmount = 0;
+
+  const todayStr = getTodayJST();
+
+  // -----------------------
+  //   D. 売上データ集計
+  // -----------------------
+  allSalesData.forEach(row => {
+    if (currentRegisterMode !== 'all' && row.register !== currentRegisterMode) {
+      return;
+    }
+
+    const dateStr = row.timestamp;
+    const dateIndex = targetDates.indexOf(dateStr);
+
+    //  学祭期間中の集計
+    if (dateIndex !== -1) {
+      activeSlots.forEach((slot, i) => {
+        const productId = slot.product_id;
+        const itemData = row.items[productId];
+        const qty = itemData?.quantity || 0;
+        const amount = itemData?.amount || 0;
+
+        if (currentViewMode === 'qty') {
+          dailyData[dateIndex][i] += qty;
+        } else {
+          dailyData[dateIndex][i] += amount;
+        }
+      });
+
+      // 「その他」列を集計
+      const otherColIndex = activeLength;
+
+      if (currentViewMode === 'qty') {
+        // 個数モードでは「その他の商品を含む会計件数」を表示
+        dailyData[dateIndex][otherColIndex] += (row.otherPrice > 0 ? 1 : 0);
+      } else {
+        dailyData[dateIndex][otherColIndex] += row.otherPrice;
+      }
+
+      // 学祭期間全体サマリー
+      totalCount++;
+      totalAmount += row.totalPrice;
+    }
+
+    // 今日のサマリーの集計
+    if (dateStr === todayStr) {
+      todayCount++;
+      todayAmount += row.totalPrice;
+    }
+  });
+
+  // ----------------------------
+  //   E. 日別データ行を描画
+  // ----------------------------
+  for (let d = 0; d < targetDates.length; d++) {
+
+    const displayDate = targetDates[d].substring(5);
+    let rowHtml = `<tr><td>${displayDate}</td>`;
+    let rowHorizontalTotalAmount = 0;
+
+    for (let i = 0; i <= activeLength; i++) {
+      const val = dailyData[d][i];
+      rowHtml += `<td>${val.toLocaleString()}</td>`;
+      verticalTotal[i] += val;
+      rowHorizontalTotalAmount += val;
+    }
+
+    // 金額モード時のみ行合計を表示
+    if (currentViewMode === 'amount') {
+      rowHtml += `<td style="font-weight: bold; background-color: #f7fafc; color: #2b6cb0;">${rowHorizontalTotalAmount.toLocaleString()}</td>`;
+      verticalGrandTotalAmount += rowHorizontalTotalAmount;
+    } else {
+      rowHtml += `<td style="color: #a0aec0; background-color: #f7fafc; text-align: center;">-</td>`;
+    }
+
+    rowHtml += `</tr>`;
+    tbody.insertAdjacentHTML('beforeend', rowHtml);
+  }
+
+  // ------------------------
+  //  F. 合計行を描画
+  // ------------------------
+  let totalRowHtml = `<tr class="row-total-summary"><td>合計</td>`;
+  for (let i = 0; i <= activeLength; i++) {
+    totalRowHtml += `<td>${verticalTotal[i].toLocaleString()}</td>`;
+  }
+
+  if (currentViewMode === 'amount') {
+    totalRowHtml += `<td style="background-color: #bee3f8; color: #2b6cb0; font-size: 16px; font-weight: bold;">${verticalGrandTotalAmount.toLocaleString()}</td>`;
+  } else {
+    totalRowHtml += `<td style="color: #a0aec0; background-color: #bee3f8; text-align: center;">-</td>`;
+  }
+
+  totalRowHtml += `</tr>`;
+  tbody.insertAdjacentHTML('beforeend', totalRowHtml);
+
+  // サマリーカードの更新
+  document.getElementById('lblTodayCount').innerHTML = `${todayCount}<span>回</span>`;
+  document.getElementById('lblTodayAmount').innerHTML = `${todayAmount.toLocaleString()}<span>円</span>`;
+  document.getElementById('lblTotalCount').innerHTML = `${totalCount}<span>回</span>`;
+  document.getElementById('lblTotalAmount').innerHTML = `${totalAmount.toLocaleString()}<span>円</span>`;
+}
+
+// ================================================
+//     補助UI・ユーティリティ関数
+// ================================================
+
+function getTableColumnCount() {
+  const activeSlots = festivalProducts.filter(slot => slot.product_id !== null);
+
+  return (
+    1 +                 // 日付
+    activeSlots.length +
+    1 +                 // その他
+    1                   // 合計
+  );
+}
+
+/**
+ * UTC日時を日本時間（JST）の YYYY/MM/DD形式へ変換する.
+ * SupabaseのtimestampはUTC基準で扱われるため, 日付集計前にJSTへ変換しておく必要がある.
+ * @param {string} dateString
+ * @returns {string}
+ */
+function formatDateJST(dateString) {
+
+  const jstDate = new Date(
+    new Date(dateString)
+      .toLocaleString(
+        'en-US',
+        { timeZone: 'Asia/Tokyo' }
+      )
+  );
+
+  return (
+    jstDate.getFullYear() +
+    "/" +
+    String(jstDate.getMonth() + 1)
+      .padStart(2, '0') +
+    "/" +
+    String(jstDate.getDate())
+      .padStart(2, '0')
+  );
+}
+
+/**
+ * 現在日時を日本時間の日付文字列（YYYY/MM/DD形式）として取得する.
+ * 今日のサマリー集計時に使用する.
+ * @returns {string}
+ */
+function getTodayJST() {
+  const now = new Date();
+  return formatDateJST(now.toISOString());
+}

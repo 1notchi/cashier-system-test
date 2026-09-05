@@ -1,0 +1,71 @@
+/* ========================================
+   トースト共通
+======================================== */
+
+.toast {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+
+  box-sizing: border-box;
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  padding: 14px 28px;
+
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: bold;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+
+  border-radius: 8px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+
+  opacity: 0;
+  transform: translate(-50%, calc(-100% - 32px));
+  transition:
+    transform 0.3s ease,
+    opacity 0.3s ease;
+
+  pointer-events: none;
+  z-index: 2000;
+}
+
+
+/* ========================================
+   成功トースト
+======================================== */
+
+.toast.success {
+  background-color: #3bbb46;
+}
+
+
+/* ========================================
+   失敗トースト
+======================================== */
+
+.toast.error {
+  background-color: #e53e3e;
+}
+
+
+/* ========================================
+   表示状態
+======================================== */
+
+.toast.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+
+/* ========================================
+   動きを減らす設定
+======================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .toast {
+    transition: opacity 0.1s linear;
+  }
+}
