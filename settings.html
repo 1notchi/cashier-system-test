@@ -8,6 +8,7 @@
   <title>NFレジシステム_設定画面</title>
   <link rel="stylesheet" href="stylesheet.css">
   <link rel="stylesheet" href="header.css">
+  <link rel="stylesheet" href="toast.css">
   <link rel="stylesheet" href="settings.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
@@ -22,7 +23,7 @@
     <h1>設定</h1>
 
     <!-- タイトル -->
-    <h2 class="settings-section-title">日程管理</h2>
+    <h2 class="settings-section-title">学園祭設定</h2>
 
     <!-- カード -->
     <section class="settings-card">
@@ -35,6 +36,16 @@
 
         <button class="setting-button" onclick="changeFestival()">
           変更
+        </button>
+      </div>
+
+      <div class="setting-row">
+        <div class="setting-label">名称変更</div>
+
+        <div class="setting-value"></div>
+
+        <button type="button" class="setting-button" onclick="changeFestivalName()">
+          編集
         </button>
       </div>
 
@@ -98,6 +109,42 @@
     </div>
   </div>
 
+  <!-- 名称変更モーダル -->
+  <div id="nameEditModal" class="modal-overlay" style="display:none;">
+    <div class="modal name-edit-modal">
+
+      <h2>名称変更</h2>
+
+      <div class="festival-row">
+        <label for="nameFestivalSelect" class="festival-label">現在の名称</label>
+
+        <select id="nameFestivalSelect" class="setting-select" onchange="loadFestivalNameForEdit()">
+        </select>
+      </div>
+
+      <div class="festival-row">
+        <label for="festivalIdInput" class="festival-label">学園祭ID</label>
+        <input type="text" id="festivalIdInput" class="name-edit-input" disabled>
+      </div>
+
+      <div class="festival-row">
+        <label for="festivalNameInput" class="festival-label">新しい名称を入力：</label>
+        <input type="text" id="festivalNameInput" class="name-edit-input" maxlength="20">
+      </div>
+
+      <div class="modal-buttons">
+        <button type="button" class="setting-button" onclick="confirmFestivalNameEdit()">
+          保存
+        </button>
+
+        <button type="button" class="cancel-button" onclick="closeNameEditModal()">
+          キャンセル
+        </button>
+      </div>
+
+    </div>
+  </div>
+
   <!-- 日程編集モーダル -->
   <div id="dateEditModal" class="modal-overlay" style="display:none;">
     <div class="modal date-edit-modal">
@@ -138,12 +185,12 @@
     </div>
   </div>
 
-  <div id="toastMessage" class="toast-message"></div>
-
   <!-- mySupabase生成, ログイン認証 -->
   <script src="auth.js"></script>
   <!-- 共通ヘッダー -->
   <script src="header.js"></script>
+  <!-- 共通トースト -->
+  <script src="toast.js"></script>
 
 
   <!-- setting.html専用処理 -->

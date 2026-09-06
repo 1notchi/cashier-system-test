@@ -30,7 +30,7 @@ async function loadHistory() {
 
   if (settingsError) {
     console.error(settingsError);
-    alert("開催情報の取得に失敗しました。");
+    Toast.error("開催情報の取得に失敗しました。");
     return;
   }
 
@@ -44,7 +44,7 @@ async function loadHistory() {
 
   if (datesError) {
     console.error(datesError);
-    alert("開催日情報の取得に失敗しました。");
+    Toast.error("開催日情報の取得に失敗しました。");
     return;
   }
 
@@ -70,7 +70,7 @@ async function loadHistory() {
 
   if (fpError) {
     console.error(fpError);
-    alert("商品情報の取得に失敗しました。");
+    Toast.error("商品情報の取得に失敗しました。");
     return;
   }
 
@@ -107,7 +107,7 @@ async function loadHistory() {
 
   if (salesError) {
     console.error(salesError);
-    alert("会計履歴の取得に失敗しました。");
+    Toast.error("会計履歴の取得に失敗しました。");
     return;
   }
 
@@ -124,7 +124,7 @@ async function loadHistory() {
 
     if (itemsError) {
       console.error(itemsError);
-      alert("会計明細の取得に失敗しました。");
+      Toast.error("会計明細の取得に失敗しました。");
       return;
     }
     saleItemsData = itemsData;
@@ -507,7 +507,7 @@ async function saveEditChanges() {
     const profile = await getCurrentProfile();
 
     if (!profile) {
-      alert("ログインユーザーを取得できませんでした。");
+      Toast.error("ログインユーザーを取得できませんでした。");
       return;
     }
 
@@ -600,7 +600,7 @@ async function saveEditChanges() {
 
     if (replaceError) {
       console.error(replaceError);
-      alert("変更前の会計明細を更新できませんでした。");
+      Toast.error("変更前の会計明細を更新できませんでした。");
       return;
     }
 
@@ -612,7 +612,7 @@ async function saveEditChanges() {
 
       if (insertError) {
         console.error(insertError);
-        alert("変更後の会計明細を登録できませんでした。");
+        Toast.error("変更後の会計明細を登録できませんでした。");
         return;
       }
     }
@@ -654,7 +654,7 @@ async function confirmDelete() {
 
   if (salesError) {
     console.error(salesError);
-    alert("削除に失敗しました。");
+    Toast.error("削除に失敗しました。");
     return;
   }
 
@@ -669,7 +669,7 @@ async function confirmDelete() {
 
   if (itemsError) {
     console.error(itemsError);
-    alert("会計明細の更新に失敗しました。");
+    Toast.error("会計明細の更新に失敗しました。");
     return;
   }
 
@@ -710,7 +710,7 @@ async function confirmRestore() {
 
   if (salesError) {
     console.error(salesError);
-    alert("会計の復活に失敗しました。");
+    Toast.error("会計の復活に失敗しました。");
     return;
   }
 
@@ -725,7 +725,7 @@ async function confirmRestore() {
 
   if (itemsError) {
     console.error(itemsError);
-    alert("会計明細の復活に失敗しました。");
+    Toast.error("会計明細の復活に失敗しました。");
     return;
   }
 

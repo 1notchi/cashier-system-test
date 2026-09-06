@@ -475,34 +475,3 @@
   cursor: not-allowed;
   box-shadow: none;
 }
-
-
-/* 自動で消えるメッセージボックス（トースト）のスタイル */
-.toast-message {
-  position: fixed;
-  top: -100px;
-  /* 初期状態は画面の上側に隠しておく */
-  left: 50%;
-  transform: translateX(-50%);
-  background-color: #48bb78;
-  color: white;
-  padding: 15px 30px;
-  font-size: 1.2rem;
-  font-weight: bold;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  z-index: 2000;
-  /* ポップアップよりも手前に表示 */
-  transition: top 0.4s ease, opacity 0.4s ease;
-  /* スムーズに動かすための設定 */
-  opacity: 0;
-  pointer-events: none;
-  /* クリックをすり抜けるようにする */
-}
-
-/* メッセージを表示するときに付与するクラス */
-.toast-message.show {
-  top: 30px;
-  /* 画面上部から30pxの位置にスライドイン */
-  opacity: 1;
-}

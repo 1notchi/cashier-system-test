@@ -464,18 +464,18 @@ function openModal() {
   // 会計前の入力チェック
   // 1. 商品が1件も選択されていない
   if (totalQuantityAll === 0 && otherPrice <= 0) {
-    alert("商品が選択されていません。");
+    Toast.error("商品が選択されていません。");
     return;
   }
   // 2. 割引枚数が適用可能数を超えている
   if (totalQuantityDiscount > totalQuantityNormal) {
-    alert("マスガチャの割引ルールに違反しています。");
+    Toast.error("マスガチャの割引ルールに違反しています。");
     return;
   }
   // 3. 合計金額がエラー状態のとき
   const totalAmountSpan = document.querySelector('.total-price-amount').textContent;
   if (totalAmountSpan === 'エラー') {
-    alert("合計金額がマイナスのため、お会計に進めません。");
+    Toast.error("合計金額がマイナスのため、お会計に進めません。");
     return;
   }
 
@@ -704,19 +704,14 @@ async function submitPayment() {
     resetApp();
 
     // 完了メッセージを表示
-    const toast = document.getElementById('toastMessage');
-    if (toast) {
-      toast.classList.add('show');
-      setTimeout(() => {
-        toast.classList.remove('show');
-      }, 3000);
-    }
+    // 完了メッセージを表示
+    Toast.success("お会計が完了しました！");
 
   }
   catch (err) {
     // 保存失敗時はエラー内容を出力し、利用者へ通知
     console.error(err);
-    alert("売上データの保存に失敗しました。");
+    Toast.error("売上データの保存に失敗しました。");
   }
   finally {
     // 成功・失敗にかかわらずボタン状態を元へ戻す
