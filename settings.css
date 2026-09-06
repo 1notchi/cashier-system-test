@@ -173,15 +173,59 @@
   color: #6b7280;
 }
 
+
 /*========================
-  名称変更モーダル
+  学園祭追加モーダル・名称変更モーダル
 ========================*/
-.name-edit-modal {
+#addFestivalModal .setting-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+#addFestivalModal .setting-button:disabled:hover {
+  background: #2563eb;
+}
+
+.festival-id-row {
+  align-items: flex-start;
+}
+
+.festival-id-row .festival-label {
+  padding-top: 8px;
+}
+
+.festival-input-area {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.festival-input-error {
+  display: none;
+  margin-top: 4px;
+  color: #dc2626;
+  font-size: 12px;
+}
+
+.festival-input-error.show {
+  display: block;
+}
+
+.festival-name-row {
+  align-items: flex-start;
+}
+
+.festival-name-row .festival-label {
+  padding-top: 8px;
+}
+
+.festival-form-modal {
   width: 560px;
   max-width: 90%;
 }
 
-.name-edit-input {
+.festival-form-input {
   flex: 1;
   min-width: 0;
   padding: 8px 10px;
@@ -190,15 +234,15 @@
   font-size: 15px;
 }
 
-.name-edit-modal .festival-label {
+.festival-form-modal .festival-label {
   width: 160px;
 }
 
-.name-edit-modal .setting-select {
+.festival-form-modal .setting-select {
   min-width: 0;
 }
 
-.name-edit-modal .modal-buttons {
+.festival-form-modal .modal-buttons {
   justify-content: center;
   gap: 12px;
 }

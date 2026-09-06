@@ -174,11 +174,59 @@ async function confirmFestivalChange() {
   Toast.success("現在の学園祭を変更しました。");
 }
 
+let isOpeningAddFestivalModal = false;
+
 // 新しい学園祭追加モーダルを開く
-function openAddFestivalModal() {
+async function openAddFestivalModal() {
+  const modal = document.getElementById("addFestivalModal");
 
-  // TODO
+  // 取得中の連打や、表示中の再初期化を防ぐ
+  if (isOpeningAddFestivalModal || modal.style.display === "flex") {
+    return;
+  }
 
+  isOpeningAddFestivalModal = true;
+
+  try {
+    const { data, error } = await mySupabase
+      .from("festivals")
+      .select("festival_id")
+      .order("festival_id", { ascending: false })
+      .limit(1);
+
+    if (error) throw error;
+
+    const maxId = data.length > 0
+      ? Number(data[0].festival_id)
+      : 0;
+
+    document.getElementById("addFestivalIdInput").value =
+      String(maxId + 1);
+
+    document.getElementById("addFestivalNameInput").value = "";
+
+    clearAddFestivalIdError();
+    clearAddFestivalNameError();
+
+    // 学園祭切り替えモーダルから追加モーダルへ移る
+    closeFestivalModal();
+    modal.style.display = "flex";
+
+    document.getElementById("addFestivalNameInput").focus();
+  } catch (error) {
+    console.error(error);
+    Toast.error("学園祭IDの初期値の取得に失敗しました。");
+  } finally {
+    isOpeningAddFestivalModal = false;
+  }
+}
+
+// 学園祭追加モーダルを閉じる
+function closeAddFestivalModal() {
+  document.getElementById("addFestivalModal").style.display = "none";
+
+  // 元の学園祭切り替えモーダルに戻る
+  document.getElementById("festivalModal").style.display = "flex";
 }
 
 //========================================
@@ -226,6 +274,244 @@ function loadFestivalNameForEdit() {
 
   document.getElementById("festivalNameInput").value =
     festival ? festival.festival_name : "";
+}
+
+let isSavingAddFestival = false;
+
+// 学園祭IDの入力を半角数字6桁までに制限
+function handleAddFestivalIdInput(input) {
+  input.value = input.value.replace(/[^0-9]/g, "").slice(0, 6);
+  clearAddFestivalIdError();
+}
+
+// 学園祭IDのエラーを表示
+function showAddFestivalIdError(message) {
+  const input = document.getElementById("addFestivalIdInput");
+  const error = document.getElementById("addFestivalIdError");
+
+  input.classList.add("input-error");
+  input.setAttribute("aria-invalid", "true");
+
+  error.textContent = message;
+  error.classList.add("show");
+}
+
+// 学園祭IDのエラーを解除
+function clearAddFestivalIdError() {
+  const input = document.getElementById("addFestivalIdInput");
+  const error = document.getElementById("addFestivalIdError");
+
+  input.classList.remove("input-error");
+  input.removeAttribute("aria-invalid");
+
+  error.textContent = "";
+  error.classList.remove("show");
+}
+
+// 学園祭名称のエラーを表示
+function showAddFestivalNameError(message) {
+  const input = document.getElementById("addFestivalNameInput");
+  const error = document.getElementById("addFestivalNameError");
+
+  input.classList.add("input-error");
+  input.setAttribute("aria-invalid", "true");
+
+  error.textContent = message;
+  error.classList.add("show");
+}
+
+// 学園祭名称のエラーを解除
+function clearAddFestivalNameError() {
+  const input = document.getElementById("addFestivalNameInput");
+  const error = document.getElementById("addFestivalNameError");
+
+  input.classList.remove("input-error");
+  input.removeAttribute("aria-invalid");
+
+  error.textContent = "";
+  error.classList.remove("show");
+}
+
+// 新しい学園祭を保存
+async function confirmAddFestival() {
+  if (isSavingAddFestival) return;
+
+  const modal = document.getElementById("addFestivalModal");
+  const idInput = document.getElementById("addFestivalIdInput");
+  const nameInput = document.getElementById("addFestivalNameInput");
+
+  clearAddFestivalIdError();
+  clearAddFestivalNameError();
+
+  const idValue = idInput.value.trim();
+  const festivalId = Number(idValue);
+  const festivalName = nameInput.value;
+
+  let hasError = false;
+
+  const isValidId =
+    /^[0-9]{1,6}$/.test(idValue) &&
+    Number.isSafeInteger(festivalId) &&
+    festivalId >= 0 &&
+    festivalId <= 999999;
+
+  if (!isValidId) {
+    showAddFestivalIdError("学園祭IDは6桁以内の整数で入力してください。");
+    hasError = true;
+  }
+
+  if (festivalName.trim() === "") {
+    showAddFestivalNameError("学園祭の名称を入力してください。");
+    hasError = true;
+  } else if (festivalName.length > 20) {
+    showAddFestivalNameError("学園祭の名称は20文字以内で入力してください。");
+    hasError = true;
+  }
+
+  isSavingAddFestival = true;
+
+  // 保存中の入力変更・連打・キャンセルを防ぐ
+  const controls = [...modal.querySelectorAll("input, button")];
+  const disabledStates = controls.map(control => control.disabled);
+  controls.forEach(control => {
+    control.disabled = true;
+  });
+
+  let saved = false;
+  let errorMessage = "学園祭IDの重複確認に失敗しました。";
+
+  try {
+    // IDが整数として正しい場合だけDBで重複を確認する。
+    // 名称にエラーがあっても、この確認は行う。
+    if (isValidId) {
+      const { data: existing, error: checkError } = await mySupabase
+        .from("festivals")
+        .select("festival_id")
+        .eq("festival_id", festivalId)
+        .limit(1);
+
+      if (checkError) throw checkError;
+
+      if (existing.length > 0) {
+        showAddFestivalIdError("そのIDは既に存在します。");
+        hasError = true;
+      }
+    }
+
+    // すべてのチェックが終わってから保存可否を判断する
+    if (hasError) {
+      return;
+    }
+
+    errorMessage = "学園祭の追加に失敗しました。";
+
+    // 日本時間の今日を YYYY-MM-DD 形式で取得
+    const dateParts = new Intl.DateTimeFormat("en-US", {
+      timeZone: "Asia/Tokyo",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    }).formatToParts(new Date());
+
+    const year = dateParts.find(part => part.type === "year").value;
+    const month = dateParts.find(part => part.type === "month").value;
+    const day = dateParts.find(part => part.type === "day").value;
+    const today = `${year}-${month}-${day}`;
+
+    // 学園祭を追加
+    const { error: insertError } = await mySupabase
+      .from("festivals")
+      .insert({
+        festival_id: festivalId,
+        festival_name: festivalName
+      });
+
+    if (insertError) throw insertError;
+
+    // 学園祭自体はこの時点で登録済み
+    saved = true;
+
+    // 今日の日程を1件追加
+    errorMessage =
+      "学園祭は追加されましたが、初期日程の追加に失敗しました。";
+
+    const { error: dateInsertError } = await mySupabase
+      .from("festival_dates")
+      .insert({
+        festival_id: festivalId,
+        target_date: today
+      });
+
+    if (dateInsertError) throw dateInsertError;
+
+    // 現在の学園祭を、追加した学園祭に切り替える
+    errorMessage =
+      "学園祭と日程は追加されましたが、現在の学園祭の変更に失敗しました。";
+
+    const { data: updatedSettings, error: settingsError } = await mySupabase
+      .from("settings")
+      .update({
+        current_festival_id: festivalId
+      })
+      .eq("id", 1)
+      .select("current_festival_id")
+      .single();
+
+    if (settingsError) throw settingsError;
+
+    // 日程編集で新しい学園祭を選択できるよう、キャッシュを更新
+    const newFestival = {
+      festival_id: festivalId,
+      festival_name: festivalName
+    };
+
+    festivalInfo = {
+      currentFestivalId: updatedSettings.current_festival_id,
+      currentFestival: newFestival,
+      festivals: [
+        ...(festivalInfo?.festivals ?? []).filter(
+          festival => Number(festival.festival_id) !== festivalId
+        ),
+        newFestival
+      ].sort((a, b) => a.festival_id - b.festival_id)
+    };
+
+    Toast.success("学園祭を追加しました");
+
+    // closeAddFestivalModal() は切り替えモーダルを再表示するため、
+    // 今回の遷移では追加モーダルを直接閉じる
+    modal.style.display = "none";
+    closeFestivalModal();
+
+    // 表示中の日程編集モーダルがあれば一度閉じる
+    closeDateEditModal();
+
+    errorMessage =
+      "学園祭の追加は完了しましたが、画面の更新に失敗しました。再読み込みしてください。";
+
+    // 追加した学園祭の日程編集モーダルを開く
+    await editFestivalDates();
+
+    // 設定画面の名称・日程も更新
+    await loadFestivalSettings();
+  } catch (error) {
+    console.error(error);
+    Toast.error(errorMessage);
+  } finally {
+    controls.forEach((control, index) => {
+      control.disabled = disabledStates[index];
+    });
+
+    isSavingAddFestival = false;
+
+    if (!saved) {
+      if (idInput.classList.contains("input-error")) {
+        idInput.focus();
+      } else if (nameInput.classList.contains("input-error")) {
+        nameInput.focus();
+      }
+    }
+  }
 }
 
 let isSavingFestivalName = false;
@@ -644,7 +930,7 @@ async function confirmDateEdit() {
   closeDateEditModal();
 
   // トースト表示
-  Toast.success("学園祭の日程を変更しました。");
+  Toast.success("学園祭の日程を保存しました。");
 
 }
 

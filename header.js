@@ -4,7 +4,8 @@ const tabs = [
     { title: "レジ", href: "cashier.html", roles: ["admin", "staff", "viewer"] },
     { title: "売上確認", href: "sales.html", roles: ["admin", "staff", "viewer"] },
     { title: "会計履歴", href: "history.html", roles: ["admin", "staff", "viewer"] },
-    { title: "設定", href: "settings.html", roles: ["admin"] }
+    { title: "設定", href: "settings.html", roles: ["admin"] },
+    { title: "ユーザー管理", href: "users.html", roles: ["admin"] }
 ];
 
 //ページ読み込み後にヘッダーを初期化

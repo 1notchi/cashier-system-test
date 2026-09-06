@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>NFレジシステム_ユーザー管理</title>
+
+  <link rel="stylesheet" href="stylesheet.css">
+  <link rel="stylesheet" href="header.css">
+  <link rel="stylesheet" href="toast.css">
+  <link rel="stylesheet" href="users.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+</head>
+
+<body>
+  <!-- 共通ヘッダー -->
+  <div id="header-container"></div>
+
+  <main class="page-content">
+    <p id="users-status" role="status">
+      ユーザー情報を確認しています...
+    </p>
+
+    <div id="users-content" hidden>
+      <h1>ユーザー管理</h1>
+
+      <div class="users-container">
+        <div id="usersTableWrapper" class="users-table-wrapper">
+          <table class="users-table" aria-label="ユーザー一覧">
+            <thead>
+              <tr>
+                <th scope="col">No.</th>
+                <th scope="col">ユーザーID</th>
+                <th scope="col">作サーID</th>
+                <th scope="col">名前</th>
+                <th scope="col">メールアドレス</th>
+                <th scope="col">ロール</th>
+                <th scope="col">ステータス</th>
+                <th scope="col">最終ログイン</th>
+                <th scope="col">操作</th>
+              </tr>
+            </thead>
+            <tbody id="usersTableBody"></tbody>
+          </table>
+        </div>
+
+        <div id="emptyUsersMessage" class="empty-users-message" hidden>
+          ユーザーが存在しません
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- mySupabase生成, ログイン認証 -->
+  <script src="auth.js"></script>
+  <!-- 共通ヘッダー -->
+  <script src="header.js"></script>
+  <!-- 共通トースト -->
+  <script src="toast.js"></script>
+
+
+  <!-- users.html専用処理 -->
+  <script src="users.js"></script>
+</body>
+
+</html>

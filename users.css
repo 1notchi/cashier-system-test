@@ -1,0 +1,135 @@
+.users-card {
+  max-width: 900px;
+  margin: 32px auto;
+  padding: 16px 28px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.users-card h2 {
+  margin-top: 0;
+  color: #374151;
+}
+
+.users-card p {
+  color: #4b5563;
+  line-height: 1.7;
+}
+
+.users-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding-top: 24px;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  box-sizing: border-box;
+}
+
+/* 横スクロール */
+.users-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background-color: white;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+/* テーブル本体 */
+.users-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: center;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.users-table th,
+.users-table td {
+  padding: 10px 8px;
+  border-bottom: 1px solid #e2e8f0;
+  border-right: 1px solid #e2e8f0;
+}
+
+.users-table th {
+  background-color: #f7fafc;
+  color: #4a5568;
+  font-weight: bold;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+/* No.列を横スクロール時も固定 */
+.users-table th:first-child,
+.users-table td:first-child {
+  font-weight: bold;
+  background-color: #f7fafc;
+  color: #2d3748;
+  position: sticky;
+  left: 0;
+  z-index: 1;
+}
+
+.users-table th:first-child {
+  z-index: 3;
+}
+
+.users-table tbody tr:hover {
+  background-color: #edf2f7;
+}
+
+/* 後からボタンを追加する操作列 */
+.users-table th:last-child,
+.users-table td:last-child {
+  min-width: 100px;
+}
+
+/* 0件の場合 */
+.empty-users-message {
+  min-height: 240px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #718096;
+  font-size: 16px;
+  text-align: center;
+}
+
+/* display: flexよりhiddenを優先 */
+.empty-users-message[hidden] {
+  display: none;
+}
+
+.users-action-buttons {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+}
+
+.users-action-button {
+  flex-shrink: 0;
+  border: none;
+  padding: 6px 14px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: bold;
+  border-radius: 6px;
+  white-space: nowrap;
+  background-color: #ebf8ff;
+  color: #2b6cb0;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.users-action-button:hover {
+  background-color: #bee3f8;
+}
+
+.users-action-button:focus-visible {
+  outline: 2px solid #3182ce;
+  outline-offset: 2px;
+}
