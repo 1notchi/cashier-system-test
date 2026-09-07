@@ -21,6 +21,8 @@ const USER_STATUS_LABELS = new Map([
 document.addEventListener("DOMContentLoaded", async () => {
   const status = document.getElementById("users-status");
   const content = document.getElementById("users-content");
+  document.getElementById("cancelVerifyUserButton").addEventListener("click", closeVerifyUserModal);
+  document.getElementById("closeVerifyUserButton").addEventListener("click", closeVerifyUserModal);
 
   try {
     const profile = await getCurrentProfile();
@@ -51,11 +53,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 // ==========================
 
 async function loadUsers() {
-  const { data, error } = await mySupabase
-    .from("profiles")
-    .select("user_id, circle_id, display_name, role, status")
-    .order("circle_id", { ascending: true })
-    .order("user_id", { ascending: true });
+  const { data, error } = await mySupabase.rpc("get_admin_users");
 
   if (error) {
     throw error;
@@ -97,7 +95,6 @@ function renderUsers(users) {
 
     const values = [
       user.serialNumber,
-      user.user_id,
       user.circle_id,
       user.display_name,
       user.email ?? "—",
@@ -118,16 +115,35 @@ function renderUsers(users) {
     actionButtons.className = "users-action-buttons";
 
     const buttonDefinitions = [
-      { label: "認証", className: "users-verify-button" },
-      { label: "パスワードリセット", className: "users-reset-button" },
-      { label: "ユーザー設定変更", className: "users-settings-button" }
+      {
+        label: "認証",
+        className: "users-verify-button",
+        disabled: ["active", "inactive"].includes(user.status)
+      },
+      {
+        label: "ユーザー設定変更",
+        className: "users-settings-button",
+        disabled: user.status === "pending"
+      },
+      {
+        label: "パスワードリセット",
+        className: "users-reset-button",
+        disabled: false
+      }
     ];
 
-    buttonDefinitions.forEach(({ label, className }) => {
+    buttonDefinitions.forEach(({ label, className, disabled }) => {
       const button = document.createElement("button");
       button.type = "button";
       button.className = `users-action-button ${className}`;
       button.textContent = label;
+      button.disabled = disabled;
+
+      if (className === "users-verify-button") {
+        button.addEventListener("click", () => {
+          openVerifyUserModal(user);
+        });
+      }
 
       actionButtons.appendChild(button);
     });
@@ -162,4 +178,22 @@ function formatLastSignIn(value) {
     second: "2-digit",
     hourCycle: "h23"
   }).format(date);
+}
+
+function openVerifyUserModal(user) {
+  const modal = document.getElementById("verifyUserModal");
+
+  document.getElementById("verifyUserName").textContent =
+    String(user.display_name ?? "");
+
+  document.getElementById("verifyUserEmail").textContent =
+    String(user.email ?? "?");
+
+  if (!modal.open) {
+    modal.showModal();
+  }
+}
+
+function closeVerifyUserModal() {
+  document.getElementById("verifyUserModal").close();
 }

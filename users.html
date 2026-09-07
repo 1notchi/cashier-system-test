@@ -34,7 +34,6 @@
             <thead>
               <tr>
                 <th scope="col">No.</th>
-                <th scope="col">ユーザーID</th>
                 <th scope="col">作サーID</th>
                 <th scope="col">名前</th>
                 <th scope="col">メールアドレス</th>
@@ -54,6 +53,33 @@
       </div>
     </div>
   </main>
+
+  <!-- 認証モーダル -->
+  <dialog id="verifyUserModal" class="users-verify-modal" aria-labelledby="verifyUserTitle"
+    aria-describedby="verifyUserMessage">
+    <button id="closeVerifyUserButton" type="button" class="users-modal-close" aria-label="閉じる">×</button>
+
+    <h2 id="verifyUserTitle" class="users-verify-title">
+      認証確認
+    </h2>
+
+    <div id="verifyUserMessage" class="users-verify-message">
+      <div id="verifyUserName"></div>
+      <div id="verifyUserEmail"></div>
+      <p>を認証しますか？</p>
+    </div>
+
+    <div class="users-modal-buttons">
+      <button id="verifyAsStaffButton" type="button" class="users-action-button users-verify-button">はい（スタッフ）</button>
+
+      <button id="verifyAsViewerButton" type="button" class="users-action-button users-verify-button">はい（閲覧専用）</button>
+
+      <button id="rejectVerifyUserButton" type="button" class="users-action-button users-reset-button">いいえ</button>
+
+      <button id="cancelVerifyUserButton" type="button" class="users-action-button users-modal-cancel"
+        autofocus>キャンセル</button>
+    </div>
+  </dialog>
 
   <!-- mySupabase生成, ログイン認証 -->
   <script src="auth.js"></script>

@@ -119,17 +119,148 @@
   font-weight: bold;
   border-radius: 6px;
   white-space: nowrap;
-  background-color: #ebf8ff;
-  color: #2b6cb0;
   cursor: pointer;
   transition: background-color 0.2s;
 }
 
-.users-action-button:hover {
+/* 認証：薄い青 */
+.users-verify-button {
+  background-color: #ebf8ff;
+  color: #2b6cb0;
+}
+
+.users-verify-button:not(:disabled):hover {
   background-color: #bee3f8;
+}
+
+/* ユーザー設定変更：薄い黄色 */
+.users-settings-button {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.users-settings-button:not(:disabled):hover {
+  background-color: #fde68a;
+}
+
+/* パスワードリセット：薄い赤 */
+.users-reset-button {
+  background-color: #fff5f5;
+  color: #c53030;
+}
+
+.users-reset-button:not(:disabled):hover {
+  background-color: #fed7d7;
 }
 
 .users-action-button:focus-visible {
   outline: 2px solid #3182ce;
   outline-offset: 2px;
+}
+
+/* 非活性ボタン */
+.users-action-button:disabled {
+  background-color: #e5e7eb;
+  color: #9ca3af;
+  cursor: default;
+  transition: none;
+}
+
+/* ==========================
+   認証モーダル
+========================== */
+
+.users-verify-modal {
+  position: fixed;
+  inset: 0;
+  width: min(640px, calc(100% - 32px));
+  max-height: calc(100dvh - 32px);
+  margin: auto;
+  padding: 40px 24px;
+  overflow-y: auto;
+  border: none;
+  border-radius: 10px;
+  background-color: #fff;
+  color: #2d3748;
+  text-align: center;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.users-verify-modal::backdrop {
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+/* 右上の閉じるボタン */
+.users-modal-close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #6b7280;
+  font-size: 28px;
+  cursor: pointer;
+}
+
+.users-modal-close:hover {
+  background-color: #f3f4f6;
+}
+
+.users-modal-close:focus-visible {
+  outline: 2px solid #3182ce;
+  outline-offset: 2px;
+}
+
+/* タイトルと名前の間に余白 */
+.users-verify-title {
+  margin: 0 0 28px;
+  font-size: 24px;
+  font-weight: bold;
+  line-height: 1.4;
+  color: #2d3748;
+}
+
+/* 名前・メールアドレス */
+.users-verify-message {
+  font-size: 16px;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+
+/* 名前とメールアドレスの間は少しだけ広げる */
+#verifyUserEmail {
+  margin-top: 6px;
+}
+
+/* 確認文の前後に余白 */
+.users-verify-message p {
+  margin: 24px 0 36px;
+}
+
+#verifyUserName {
+  font-weight: bold;
+}
+
+/* 通常は横並び、狭い画面では折り返す */
+.users-modal-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
+.users-modal-cancel {
+  background-color: #f3f4f6;
+  color: #4b5563;
+}
+
+.users-modal-cancel:hover {
+  background-color: #e5e7eb;
 }
