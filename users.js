@@ -14,6 +14,9 @@ const USER_STATUS_LABELS = new Map([
   ["inactive", "無効"]
 ]);
 
+let verifyTargetUserId = null;
+let isReviewingUser = false;
+
 // ==========================
 // 初期化・権限確認
 // ==========================
@@ -23,6 +26,25 @@ document.addEventListener("DOMContentLoaded", async () => {
   const content = document.getElementById("users-content");
   document.getElementById("cancelVerifyUserButton").addEventListener("click", closeVerifyUserModal);
   document.getElementById("closeVerifyUserButton").addEventListener("click", closeVerifyUserModal);
+  document.getElementById("verifyAsStaffButton").addEventListener("click", () => submitUserReview("staff"));
+  document.getElementById("verifyAsViewerButton").addEventListener("click", () => submitUserReview("viewer"));
+  document.getElementById("rejectVerifyUserButton").addEventListener("click", () => submitUserReview("reject"));
+  document.getElementById("cancelResetPasswordButton").addEventListener("click", closeResetPasswordModal);
+  document.getElementById("closeResetPasswordButton").addEventListener("click", closeResetPasswordModal);
+
+  const verifyModal = document.getElementById("verifyUserModal");
+
+  // 更新中はEscキーでも閉じない
+  verifyModal.addEventListener("cancel", event => {
+    if (isReviewingUser) {
+      event.preventDefault();
+    }
+  });
+
+  // Escキーで閉じた場合も対象を解除する
+  verifyModal.addEventListener("close", () => {
+    verifyTargetUserId = null;
+  });
 
   try {
     const profile = await getCurrentProfile();
@@ -116,7 +138,7 @@ function renderUsers(users) {
 
     const buttonDefinitions = [
       {
-        label: "認証",
+        label: "承認",
         className: "users-verify-button",
         disabled: ["active", "inactive"].includes(user.status)
       },
@@ -142,6 +164,12 @@ function renderUsers(users) {
       if (className === "users-verify-button") {
         button.addEventListener("click", () => {
           openVerifyUserModal(user);
+        });
+      }
+
+      if (className === "users-reset-button") {
+        button.addEventListener("click", () => {
+          openResetPasswordModal(user);
         });
       }
 
@@ -180,20 +208,151 @@ function formatLastSignIn(value) {
   }).format(date);
 }
 
+// ==========================
+// 承認モーダル
+// ==========================
+
 function openVerifyUserModal(user) {
   const modal = document.getElementById("verifyUserModal");
+
+  if (isReviewingUser || modal.open || user.status !== "pending") {
+    return;
+  }
+
+  verifyTargetUserId = user.user_id;
 
   document.getElementById("verifyUserName").textContent =
     String(user.display_name ?? "");
 
   document.getElementById("verifyUserEmail").textContent =
-    String(user.email ?? "?");
+    String(user.email ?? "—");
 
-  if (!modal.open) {
-    modal.showModal();
-  }
+  modal.showModal();
 }
 
 function closeVerifyUserModal() {
+  if (isReviewingUser) {
+    return;
+  }
+
   document.getElementById("verifyUserModal").close();
+  verifyTargetUserId = null;
+}
+
+// 処理中はモーダル内の全ボタンを非活性にする
+function setUserReviewBusy(busy) {
+  isReviewingUser = busy;
+
+  const modal = document.getElementById("verifyUserModal");
+  modal.setAttribute("aria-busy", String(busy));
+
+  modal.querySelectorAll("button").forEach(button => {
+    button.disabled = busy;
+  });
+}
+
+// ==========================
+// 承認・拒否
+// ==========================
+
+async function submitUserReview(decision) {
+  if (isReviewingUser || !verifyTargetUserId) {
+    return;
+  }
+
+  if (!["staff", "viewer", "reject"].includes(decision)) {
+    return;
+  }
+
+  const updates = {
+    staff: {
+      status: "active",
+      role: "staff"
+    },
+    viewer: {
+      status: "active",
+      role: "viewer"
+    },
+    reject: {
+      status: "inactive",
+      role: "viewer"
+    }
+  };
+
+  const targetUserId = verifyTargetUserId;
+  setUserReviewBusy(true);
+
+  try {
+    const { data, error } = await mySupabase
+      .from("profiles")
+      .update(updates[decision])
+      .eq("user_id", targetUserId)
+      .eq("status", "pending")
+      .select("user_id");
+
+    if (error) {
+      throw error;
+    }
+
+    // 更新0件を成功扱いにしない
+    if (!data || data.length !== 1) {
+      throw new Error(
+        "更新できませんでした。すでに処理済みか、対象が存在しないか、更新権限がありません。"
+      );
+    }
+  } catch (error) {
+    console.error("ユーザーの承認・拒否に失敗しました。", error);
+
+    Toast.error(
+      error.message || "ユーザーの更新に失敗しました。"
+    );
+
+    setUserReviewBusy(false);
+    return;
+  }
+
+  // 更新成功時にモーダルを閉じる
+  document.getElementById("verifyUserModal").close();
+  verifyTargetUserId = null;
+
+  if (decision === "reject") {
+    Toast.success("ユーザーを拒否しました。");
+  } else {
+    Toast.success("ユーザーを承認しました。");
+  }
+
+  // 一覧と各行のボタンの活性状態を更新
+  try {
+    await loadUsers();
+  } catch (error) {
+    console.error("更新後の一覧取得に失敗しました。", error);
+
+    Toast.error("更新は完了しましたが、一覧を再取得できませんでした。再読み込みしてください。");
+  } finally {
+    setUserReviewBusy(false);
+  }
+}
+
+// ==========================
+// パスワードリセットモーダル
+// ==========================
+
+function openResetPasswordModal(user) {
+  const modal = document.getElementById("resetPasswordModal");
+
+  if (modal.open) {
+    return;
+  }
+
+  document.getElementById("resetPasswordName").textContent =
+    String(user.display_name ?? "");
+
+  document.getElementById("resetPasswordEmail").textContent =
+    String(user.email ?? "—");
+
+  modal.showModal();
+}
+
+function closeResetPasswordModal() {
+  document.getElementById("resetPasswordModal").close();
 }

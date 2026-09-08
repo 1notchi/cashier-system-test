@@ -54,19 +54,19 @@
     </div>
   </main>
 
-  <!-- 認証モーダル -->
+  <!-- 承認モーダル -->
   <dialog id="verifyUserModal" class="users-verify-modal" aria-labelledby="verifyUserTitle"
     aria-describedby="verifyUserMessage">
     <button id="closeVerifyUserButton" type="button" class="users-modal-close" aria-label="閉じる">×</button>
 
     <h2 id="verifyUserTitle" class="users-verify-title">
-      認証確認
+      承認確認
     </h2>
 
     <div id="verifyUserMessage" class="users-verify-message">
       <div id="verifyUserName"></div>
       <div id="verifyUserEmail"></div>
-      <p>を認証しますか？</p>
+      <p>を承認しますか？</p>
     </div>
 
     <div class="users-modal-buttons">
@@ -77,6 +77,29 @@
       <button id="rejectVerifyUserButton" type="button" class="users-action-button users-reset-button">いいえ</button>
 
       <button id="cancelVerifyUserButton" type="button" class="users-action-button users-modal-cancel"
+        autofocus>キャンセル</button>
+    </div>
+  </dialog>
+
+  <!-- パスワードリセットモーダル -->
+  <dialog id="resetPasswordModal" class="users-verify-modal" aria-labelledby="resetPasswordTitle"
+    aria-describedby="resetPasswordMessage">
+    <button id="closeResetPasswordButton" type="button" class="users-modal-close" aria-label="閉じる">×</button>
+
+    <h2 id="resetPasswordTitle" class="users-verify-title">
+      パスワードリセット
+    </h2>
+
+    <div id="resetPasswordMessage" class="users-verify-message">
+      <div id="resetPasswordName"></div>
+      <div id="resetPasswordEmail"></div>
+      <p>のパスワードをリセットしますか？</p>
+    </div>
+
+    <div class="users-modal-buttons">
+      <button id="confirmResetPasswordButton" type="button" class="users-action-button users-reset-button">リセット</button>
+
+      <button id="cancelResetPasswordButton" type="button" class="users-action-button users-modal-cancel"
         autofocus>キャンセル</button>
     </div>
   </dialog>

@@ -123,7 +123,7 @@
   transition: background-color 0.2s;
 }
 
-/* 認証：薄い青 */
+/* 承認：薄い青 */
 .users-verify-button {
   background-color: #ebf8ff;
   color: #2b6cb0;
@@ -167,7 +167,7 @@
 }
 
 /* ==========================
-   認証モーダル
+   承認モーダル
 ========================== */
 
 .users-verify-modal {
@@ -263,4 +263,29 @@
 
 .users-modal-cancel:hover {
   background-color: #e5e7eb;
+}
+
+/* ==========================
+   パスワードリセットモーダル
+========================== */
+
+#resetPasswordModal {
+  width: min(480px, calc(100% - 32px));
+}
+
+#resetPasswordName {
+  font-weight: bold;
+}
+
+#resetPasswordEmail {
+  margin-top: 6px;
+}
+
+#confirmResetPasswordButton {
+  background-color: #dc2626;
+  color: #fff;
+}
+
+#confirmResetPasswordButton:not(:disabled):hover {
+  background-color: #b91c1c;
 }
