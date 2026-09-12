@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NFレジシステム_パスワードリセット</title>
+  <link rel="stylesheet" href="reset.css">
+  <link rel="stylesheet" href="toast.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="config.js" defer></script>
+</head>
+
+<body>
+  <main class="reset-box">
+    <div class="reset-title">
+      <h1>NFレジ</h1>
+      <p>パスワードリセット</p>
+    </div>
+
+    <div id="reset-content" class="reset-content">
+      <div class="input-group">
+        <label for="email">メールアドレス</label>
+        <input id="email" name="email" type="email" autocomplete="email" placeholder="example@example.com" required
+          maxlength="254">
+      </div>
+
+      <button type="button" id="request-reset">
+        パスワードリセットを申請
+      </button>
+    </div>
+
+    <a href="login.html" class="back-link">
+      ログイン画面に戻る
+    </a>
+
+    <div id="error" class="error" role="alert"></div>
+  </main>
+
+  <!-- 共通トースト -->
+  <script src="toast.js" defer></script>
+  <!-- login.html専用処理 -->
+  <script src="reset.js" defer></script>
+
+</body>
+
+</html>

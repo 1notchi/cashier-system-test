@@ -93,14 +93,47 @@
     <div id="resetPasswordMessage" class="users-verify-message">
       <div id="resetPasswordName"></div>
       <div id="resetPasswordEmail"></div>
-      <p>のパスワードをリセットしますか？</p>
+
+      <p>
+        のパスワードリセットリクエストが<br>
+        <span id="resetPasswordRequestedAt"></span><br>
+        に送信されました。パスワードをリセットしますか？
+      </p>
     </div>
 
     <div class="users-modal-buttons">
       <button id="confirmResetPasswordButton" type="button" class="users-action-button users-reset-button">リセット</button>
-
+      <button id="rejectResetPasswordButton" type="button" class="users-action-button users-settings-button">拒否</button>
       <button id="cancelResetPasswordButton" type="button" class="users-action-button users-modal-cancel"
         autofocus>キャンセル</button>
+    </div>
+  </dialog>
+
+  <!-- パスワード発行モーダル -->
+  <dialog id="issuedPasswordModal" class="users-verify-modal" aria-labelledby="issuedPasswordTitle"
+    aria-describedby="issuedPasswordMessage">
+    <h2 id="issuedPasswordTitle" class="users-verify-title">
+      パスワード発行
+    </h2>
+
+    <div id="issuedPasswordMessage" class="issued-password-message">
+      <p>パスワードを変更しました。</p>
+      <p>下記パスワードをユーザーに共有してください。</p>
+      <p>
+        これは仮パスワードなので、ユーザーにはログイン後に
+        パスワードを設定しなおすように依頼してください。
+      </p>
+    </div>
+
+    <div class="issued-password-box">
+      <code id="issuedPasswordValue"></code>
+    </div>
+
+    <p id="issuedPasswordWarning" role="status" hidden></p>
+
+    <div class="users-modal-buttons">
+      <button id="closeIssuedPasswordButton" type="button" class="users-action-button users-modal-cancel"
+        autofocus>閉じる</button>
     </div>
   </dialog>
 

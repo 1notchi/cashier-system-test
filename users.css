@@ -289,3 +289,52 @@
 #confirmResetPasswordButton:not(:disabled):hover {
   background-color: #b91c1c;
 }
+
+#issuedPasswordModal {
+  width: min(480px, calc(100% - 32px));
+}
+
+#resetPasswordModal button:disabled,
+#resetPasswordModal button:disabled:hover {
+  background-color: #e5e7eb;
+  color: #9ca3af;
+  cursor: default;
+  transition: none;
+}
+
+.issued-password-message {
+  font-size: 15px;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+
+.issued-password-message p {
+  margin: 0 0 14px;
+}
+
+.issued-password-box {
+  margin: 24px 0 32px;
+  padding: 16px;
+  border: 1px solid #cbd5e0;
+  border-radius: 8px;
+  background-color: #f7fafc;
+  text-align: center;
+}
+
+#issuedPasswordValue {
+  font-family: Consolas, monospace;
+  font-size: 24px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
+#issuedPasswordWarning {
+  margin: 0 0 24px;
+  color: #92400e;
+  font-size: 14px;
+  line-height: 1.7;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
