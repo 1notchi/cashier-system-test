@@ -81,6 +81,68 @@
     </div>
   </dialog>
 
+  <!-- ユーザー設定変更モーダル -->
+  <dialog id="userSettingsModal" class="users-verify-modal" aria-labelledby="userSettingsTitle">
+    <button id="closeUserSettingsButton" type="button" class="users-modal-close" aria-label="閉じる">&times;</button>
+
+    <h2 id="userSettingsTitle" class="users-verify-title">
+      ユーザー設定変更
+    </h2>
+
+    <dl class="users-settings-details">
+      <dt>ユーザーID</dt>
+      <dd id="userSettingsUserId"></dd>
+
+      <dt><label for="userSettingsCircleId">作サーID</label></dt>
+      <dd><input id="userSettingsCircleId" type="text" class="users-settings-input"></dd>
+
+      <dt><label for="userSettingsName">名前</label></dt>
+      <dd><input id="userSettingsName" type="text" class="users-settings-input"></dd>
+
+      <dt>メールアドレス</dt>
+      <dd id="userSettingsEmail"></dd>
+
+      <dt id="userSettingsRoleLabel">ロール</dt>
+      <dd>
+        <div class="users-settings-options" role="radiogroup" aria-labelledby="userSettingsRoleLabel">
+          <label>
+            <input type="radio" name="userSettingsRole" value="admin">
+            管理者
+          </label>
+          <label>
+            <input type="radio" name="userSettingsRole" value="staff">
+            スタッフ
+          </label>
+          <label>
+            <input type="radio" name="userSettingsRole" value="viewer">
+            閲覧専用
+          </label>
+        </div>
+      </dd>
+
+      <dt id="userSettingsStatusLabel">ステータス</dt>
+      <dd>
+        <div class="users-settings-options" role="radiogroup" aria-labelledby="userSettingsStatusLabel">
+          <label>
+            <input type="radio" name="userSettingsStatus" value="active">
+            有効
+          </label>
+          <label>
+            <input type="radio" name="userSettingsStatus" value="inactive">
+            無効
+          </label>
+        </div>
+      </dd>
+    </dl>
+
+    <div class="users-modal-buttons">
+      <button id="confirmUserSettingsButton" type="button" class="users-action-button users-settings-button">変更</button>
+
+      <button id="cancelUserSettingsButton" type="button" class="users-action-button users-modal-cancel"
+        autofocus>キャンセル</button>
+    </div>
+  </dialog>
+
   <!-- パスワードリセットモーダル -->
   <dialog id="resetPasswordModal" class="users-verify-modal" aria-labelledby="resetPasswordTitle"
     aria-describedby="resetPasswordMessage">
@@ -103,7 +165,7 @@
 
     <div class="users-modal-buttons">
       <button id="confirmResetPasswordButton" type="button" class="users-action-button users-reset-button">リセット</button>
-      <button id="rejectResetPasswordButton" type="button" class="users-action-button users-settings-button">拒否</button>
+      <button id="rejectResetPasswordButton" type="button" class="users-action-button users-reset-button">拒否</button>
       <button id="cancelResetPasswordButton" type="button" class="users-action-button users-modal-cancel"
         autofocus>キャンセル</button>
     </div>

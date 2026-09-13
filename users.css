@@ -76,8 +76,15 @@
   z-index: 3;
 }
 
-.users-table tbody tr:hover {
+/* 無効ユーザー以外の行にhoverを適用 */
+.users-table tbody tr:not(.users-inactive-row):hover {
   background-color: #edf2f7;
+}
+
+/* 無効ユーザーの行：固定表示のNo.列にも適用 */
+.users-table tbody tr.users-inactive-row>td {
+  background-color: #f3f4f6;
+  color: #9ca3af;
 }
 
 /* 後からボタンを追加する操作列 */
@@ -263,6 +270,112 @@
 
 .users-modal-cancel:hover {
   background-color: #e5e7eb;
+}
+
+/* ==========================
+  設定変更モーダル
+==========================*/
+
+#userSettingsModal {
+  box-sizing: border-box;
+  width: min(576px, calc(100% - 32px));
+}
+
+.users-settings-details {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 16px 24px;
+  margin: 0 0 32px;
+  text-align: left;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.users-settings-details dt {
+  font-weight: bold;
+  color: #4b5563;
+}
+
+.users-settings-details dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+@media (max-width: 480px) {
+  .users-settings-details {
+    column-gap: 12px;
+    font-size: 14px;
+  }
+}
+
+#confirmUserSettingsButton {
+  background-color: #2563eb;
+  color: #fff;
+}
+
+#confirmUserSettingsButton:not(:disabled):hover {
+  background-color: #1d4ed8;
+}
+
+.users-settings-input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background-color: #fff;
+  color: #2d3748;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+.users-settings-input:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+.users-settings-options {
+  display: grid;
+  grid-template-columns: repeat(3, 90px);
+  justify-content: start;
+  align-items: center;
+  gap: 10px 8px;
+  white-space: normal;
+}
+
+/* 狭い画面では、はみ出さないように折り返す */
+@media (max-width: 480px) {
+  .users-settings-options {
+    grid-template-columns: repeat(auto-fit, 90px);
+  }
+}
+
+.users-settings-options label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.users-settings-options input[type="radio"] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  flex-shrink: 0;
+  accent-color: #2563eb;
+  cursor: pointer;
+}
+
+.users-settings-options label:has(input:disabled) {
+  color: #9ca3af;
+  cursor: default;
+}
+
+.users-settings-options input[type="radio"]:disabled {
+  cursor: default;
 }
 
 /* ==========================

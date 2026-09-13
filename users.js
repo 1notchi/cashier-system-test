@@ -18,6 +18,9 @@ let verifyTargetUserId = null;
 let isReviewingUser = false;
 let resetPasswordTarget = null;
 let isProcessingPasswordReset = false;
+let currentAdminUserId = null;
+let userSettingsTarget = null;
+let isSavingUserSettings = false;
 
 // ==========================
 // 初期化・権限確認
@@ -26,11 +29,28 @@ let isProcessingPasswordReset = false;
 document.addEventListener("DOMContentLoaded", async () => {
   const status = document.getElementById("users-status");
   const content = document.getElementById("users-content");
+
   document.getElementById("cancelVerifyUserButton").addEventListener("click", closeVerifyUserModal);
   document.getElementById("closeVerifyUserButton").addEventListener("click", closeVerifyUserModal);
   document.getElementById("verifyAsStaffButton").addEventListener("click", () => submitUserReview("staff"));
   document.getElementById("verifyAsViewerButton").addEventListener("click", () => submitUserReview("viewer"));
   document.getElementById("rejectVerifyUserButton").addEventListener("click", () => submitUserReview("reject"));
+
+  document.getElementById("cancelUserSettingsButton").addEventListener("click", closeUserSettingsModal);
+  document.getElementById("closeUserSettingsButton").addEventListener("click", closeUserSettingsModal);
+  document.getElementById("confirmUserSettingsButton").addEventListener("click", saveUserSettings);
+  const settingsModal = document.getElementById("userSettingsModal");
+
+  settingsModal.addEventListener("cancel", event => {
+    if (isSavingUserSettings) {
+      event.preventDefault();
+    }
+  });
+
+  settingsModal.addEventListener("close", () => {
+    userSettingsTarget = null;
+  });
+
   document.getElementById("cancelResetPasswordButton").addEventListener("click", closeResetPasswordModal);
   document.getElementById("closeResetPasswordButton").addEventListener("click", closeResetPasswordModal);
   document.getElementById("confirmResetPasswordButton").addEventListener("click", openIssuedPasswordModal);
@@ -74,6 +94,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   try {
     const profile = await getCurrentProfile();
+    currentAdminUserId = profile.user_id;
 
     if (profile.role !== "admin") {
       location.replace("top.html");
@@ -141,6 +162,10 @@ function renderUsers(users) {
   numberedUsers.forEach(user => {
     const tr = document.createElement("tr");
 
+    if (user.status === "inactive") {
+      tr.classList.add("users-inactive-row");
+    }
+
     const values = [
       user.serialNumber,
       user.circle_id,
@@ -200,6 +225,12 @@ function renderUsers(users) {
       }
 
       actionButtons.appendChild(button);
+
+      if (className === "users-settings-button") {
+        button.addEventListener("click", () => {
+          openUserSettingsModal(user);
+        });
+      }
     });
 
     actionCell.appendChild(actionButtons);
@@ -356,6 +387,190 @@ async function submitUserReview(decision) {
     Toast.error("更新は完了しましたが、一覧を再取得できませんでした。再読み込みしてください。");
   } finally {
     setUserReviewBusy(false);
+  }
+}
+
+// ==========================
+// ユーザー設定変更モーダル
+// ==========================
+
+function openUserSettingsModal(user) {
+  const modal = document.getElementById("userSettingsModal");
+
+  if (isSavingUserSettings || modal.open || user.status === "pending") {
+    return;
+  }
+
+  userSettingsTarget = {
+    userId: user.user_id,
+    originalCircleId: user.circle_id
+  };
+
+  const values = [
+    ["userSettingsUserId", user.user_id],
+    ["userSettingsEmail", user.email]
+  ];
+
+  values.forEach(([id, value]) => {
+    document.getElementById(id).textContent = String(value ?? "—");
+  });
+
+  document.getElementById("userSettingsCircleId").value =
+    String(user.circle_id ?? "");
+
+  document.getElementById("userSettingsName").value =
+    String(user.display_name ?? "");
+
+  const isSelf = user.user_id === currentAdminUserId;
+
+  modal.querySelectorAll('input[name="userSettingsRole"]')
+    .forEach(input => {
+      input.checked = input.value === user.role;
+      input.disabled = isSelf;
+    });
+
+  modal.querySelectorAll('input[name="userSettingsStatus"]')
+    .forEach(input => {
+      input.checked = input.value === user.status;
+      input.disabled = isSelf;
+    });
+
+  modal.showModal();
+}
+
+function closeUserSettingsModal() {
+  if (isSavingUserSettings) {
+    return;
+  }
+
+  document.getElementById("userSettingsModal").close();
+}
+
+function setUserSettingsBusy(busy) {
+  isSavingUserSettings = busy;
+
+  const modal = document.getElementById("userSettingsModal");
+  const isSelf = userSettingsTarget?.userId === currentAdminUserId;
+
+  modal.setAttribute("aria-busy", String(busy));
+
+  modal.querySelectorAll("button, input").forEach(element => {
+    const isProtectedField =
+      element.name === "userSettingsRole" ||
+      element.name === "userSettingsStatus";
+
+    element.disabled = busy || (isSelf && isProtectedField);
+  });
+
+  document.getElementById("confirmUserSettingsButton").textContent =
+    busy ? "保存中..." : "変更";
+}
+
+async function saveUserSettings() {
+  const modal = document.getElementById("userSettingsModal");
+
+  if (isSavingUserSettings || !userSettingsTarget || !modal.open) {
+    return;
+  }
+
+  const target = { ...userSettingsTarget };
+  const isSelf = target.userId === currentAdminUserId;
+
+  const updates = {
+    circle_id: document.getElementById("userSettingsCircleId").value.trim(),
+    display_name: document.getElementById("userSettingsName").value.trim()
+  };
+
+  setUserSettingsBusy(true);
+
+  try {
+    if (!currentAdminUserId) {
+      throw new Error("ログイン情報を確認できません。再読み込みしてください。");
+    }
+
+    if (!updates.circle_id || !updates.display_name) {
+      throw new Error("作サーIDと名前を入力してください。");
+    }
+
+    // 自分自身のロール・ステータスは更新しない
+    if (!isSelf) {
+      const role = modal.querySelector(
+        'input[name="userSettingsRole"]:checked'
+      )?.value;
+
+      const status = modal.querySelector(
+        'input[name="userSettingsStatus"]:checked'
+      )?.value;
+
+      if (!["admin", "staff", "viewer"].includes(role)) {
+        throw new Error("ロールを選択してください。");
+      }
+
+      if (!["active", "inactive"].includes(status)) {
+        throw new Error("ステータスを選択してください。");
+      }
+
+      updates.role = role;
+      updates.status = status;
+    }
+
+    const { data, error } = await mySupabase
+      .from("profiles")
+      .update(updates)
+      .eq("circle_id", target.originalCircleId)
+      .eq("user_id", target.userId)
+      .select("user_id");
+
+    if (error) {
+      if (error.code === "23505") {
+        throw new Error("作サーIDなどの一意項目が、既存の登録と重複しています。");
+      }
+
+      if (error.code === "23503") {
+        throw new Error(
+          "関連データの制約により作サーIDを変更できません。"
+        );
+      }
+
+      throw error;
+    }
+
+    if (!data || data.length !== 1) {
+      throw new Error(
+        "対象が変更・削除されたか、更新権限がありません。一覧を再読み込みしてください。"
+      );
+    }
+
+    // 自分の名前・作サーIDを変更した場合はプロフィールキャッシュを破棄
+    if (isSelf) {
+      currentProfileCache = null;
+    }
+  } catch (error) {
+    console.error("ユーザー設定の保存に失敗しました。", error);
+
+    setUserSettingsBusy(false);
+    modal.close();
+
+    Toast.error(
+      error.message || "ユーザー設定の保存に失敗しました。"
+    );
+    return;
+  }
+
+  modal.close();
+  Toast.success("ユーザー設定を変更しました。");
+
+  // 保存成功と一覧の再取得失敗を区別する
+  try {
+    await loadUsers();
+  } catch (error) {
+    console.error("保存後の一覧取得に失敗しました。", error);
+
+    Toast.error(
+      "保存は完了しましたが、一覧を更新できませんでした。再読み込みしてください。"
+    );
+  } finally {
+    setUserSettingsBusy(false);
   }
 }
 
