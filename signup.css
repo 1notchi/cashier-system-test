@@ -8,29 +8,12 @@ body {
   font-family: sans-serif;
 }
 
-.login-box {
+.signup-box {
   width: 380px;
   background: #fff;
   padding: 40px;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, .08);
-}
-
-.login-logo {
-  text-align: center;
-  margin-bottom: 28px;
-}
-
-.login-logo h1 {
-  margin: 0;
-  font-size: 28px;
-  color: #333;
-}
-
-.login-logo p {
-  margin-top: 8px;
-  color: #666;
-  font-size: 15px;
 }
 
 .input-group {
@@ -61,6 +44,26 @@ input:focus {
   box-shadow: 0 0 0 3px rgba(49, 130, 206, .15);
 }
 
+input.input-error {
+  border: 2px solid #ef4444;
+  background: #fef2f2;
+}
+
+input.input-error:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, .15);
+}
+
+.signup-input-error {
+  margin-top: 4px;
+  color: #dc2626;
+  font-size: 12px;
+}
+
+.signup-input-error:empty {
+  display: none;
+}
+
 button {
   width: 100%;
   margin-top: 10px;
@@ -79,68 +82,75 @@ button:hover {
   background: #2b6cb0;
 }
 
-input.input-error {
-  border: 2px solid #ef4444;
-  background: #fef2f2;
+button:focus-visible {
+  outline: 2px solid #3182ce;
+  outline-offset: 3px;
 }
 
-input.input-error:focus {
-  border-color: #ef4444;
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, .15);
-}
-
-.login-input-error {
-  margin-top: 4px;
-  color: #dc2626;
-  font-size: 12px;
-}
-
-.login-input-error:empty {
-  display: none;
-}
-
-#forgot-password {
+.back-link {
   display: block;
   width: fit-content;
-  min-height: 0;
   margin: 10px auto 0;
   padding: 6px 10px;
-  background: transparent;
-  border: none;
+  border-radius: 8px;
   color: #3182ce;
   font-size: 14px;
   font-weight: bold;
+  text-align: center;
+  text-decoration: none;
+  transition: color .2s;
 }
 
-#forgot-password:hover {
-  background: transparent;
+.back-link:hover {
   color: #2b6cb0;
   text-decoration: underline;
 }
 
-#forgot-password:focus-visible {
+.back-link:focus-visible {
   outline: 2px solid #3182ce;
   outline-offset: 2px;
 }
 
-.login-divider {
-  margin: 24px 0;
-  border: 0;
-  border-top: 1px solid #e2e8f0;
+.password-field {
+  position: relative;
 }
 
-.signup-button {
-  margin-top: 0;
-  background: #fff;
-  border: 1px solid #3182ce;
+.password-field input {
+  padding-right: 52px;
+}
+
+.password-reveal {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #666;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.password-reveal:hover,
+.password-reveal:active {
+  background: #edf2f7;
   color: #3182ce;
 }
 
-.signup-button:hover {
-  background: #ebf8ff;
+.password-reveal:focus-visible {
+  outline: 2px solid #3182ce;
+  outline-offset: -2px;
 }
 
-.signup-button:focus-visible {
-  outline: 2px solid #3182ce;
-  outline-offset: 3px;
+.password-reveal svg {
+  pointer-events: none;
 }

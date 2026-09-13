@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NFレジシステム_アカウント作成</title>
+  <link rel="stylesheet" href="signup.css">
+</head>
+
+<body>
+
+  <div class="signup-box">
+
+    <div class="signup-title">
+      <h1>NFレジ</h1>
+      <p>アカウントを作成してください</p>
+    </div>
+
+    <div class="input-group">
+      <label for="email">メールアドレス</label>
+      <input id="email" name="email" type="email" autocomplete="email" placeholder="example@example.com" maxlength="254"
+        required aria-describedby="email-error">
+      <div id="email-error" class="signup-input-error" role="alert"></div>
+    </div>
+
+    <div class="input-group">
+      <label for="password">パスワード</label>
+
+      <div class="password-field">
+        <input id="password" name="password" type="password" autocomplete="new-password" placeholder="パスワード"
+          minlength="4" maxlength="64" required aria-describedby="password-error">
+
+        <button type="button" id="reveal-password" class="password-reveal" aria-label="押している間だけパスワードを表示"
+          aria-controls="password">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"
+            aria-hidden="true" focusable="false">
+            <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+        </button>
+      </div>
+
+      <div id="password-error" class="signup-input-error" role="alert"></div>
+    </div>
+
+    <div class="input-group">
+      <label for="display-name">ユーザー名</label>
+      <input id="display-name" name="display_name" type="text" autocomplete="nickname" placeholder="ユーザー名"
+        maxlength="32" required aria-describedby="display-name-error">
+      <div id="display-name-error" class="signup-input-error" role="alert"></div>
+    </div>
+
+    <button type="button" id="create-account">
+      アカウント作成をリクエスト
+    </button>
+
+    <a href="login.html" class="back-link">
+      ログイン画面に戻る
+    </a>
+
+  </div>
+
+  <!-- signup.html専用処理 -->
+  <script src="signup.js"></script>
+
+</body>
+
+</html>
