@@ -174,6 +174,151 @@
 }
 
 /* ==========================
+   アカウント追加
+========================== */
+.users-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.users-toolbar h1 {
+  margin: 0;
+}
+
+.users-add-button {
+  padding: 10px 18px;
+  background-color: #3182ce;
+  color: #fff;
+  font-size: 14px;
+}
+
+.users-add-button:not(:disabled):hover {
+  background-color: #2b6cb0;
+}
+
+#addAccountModal {
+  box-sizing: border-box;
+  width: min(460px, calc(100% - 32px));
+}
+
+.users-add-fields {
+  margin-bottom: 28px;
+  text-align: left;
+}
+
+.users-add-input-group {
+  margin-bottom: 18px;
+}
+
+.users-add-input-group:last-child {
+  margin-bottom: 0;
+}
+
+.users-add-input-group label {
+  display: block;
+  margin-bottom: 6px;
+  color: #555;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.users-add-input-group input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid #cbd5e0;
+  border-radius: 8px;
+  background: #fff;
+  color: #2d3748;
+  font-family: inherit;
+  font-size: 15px;
+  transition: .2s;
+}
+
+.users-add-input-group input:focus {
+  outline: none;
+  border-color: #3182ce;
+  box-shadow: 0 0 0 3px rgba(49, 130, 206, .15);
+}
+
+.users-add-password-field {
+  position: relative;
+}
+
+.users-add-password-field input {
+  padding-right: 52px;
+}
+
+.users-add-password-reveal {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #666;
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.users-add-password-reveal:hover,
+.users-add-password-reveal:active {
+  background: #edf2f7;
+  color: #3182ce;
+}
+
+.users-add-password-reveal:focus-visible {
+  outline: 2px solid #3182ce;
+  outline-offset: -2px;
+}
+
+.users-add-password-reveal svg {
+  pointer-events: none;
+}
+
+/* 作成・キャンセルの高さを統一 */
+#addAccountModal .users-modal-buttons>button {
+  padding: 10px 18px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* 入力エラー */
+.users-add-input-group input.input-error {
+  border: 2px solid #ef4444;
+  background: #fef2f2;
+}
+
+.users-add-input-group input.input-error:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, .15);
+}
+
+.users-add-input-error {
+  margin-top: 4px;
+  color: #dc2626;
+  font-size: 12px;
+}
+
+.users-add-input-error:empty {
+  display: none;
+}
+
+/* ==========================
    承認モーダル
 ========================== */
 

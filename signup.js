@@ -1,3 +1,11 @@
+const mySupabase = window.supabase.createClient(
+  CONFIG.SUPABASE_URL,
+  CONFIG.SUPABASE_KEY
+);
+
+let isCreatingAccount = false;
+let isAccountCreated = false;
+
 const signupInputIds = ["email", "password", "display-name"];
 
 document.getElementById("create-account")
@@ -48,7 +56,6 @@ function validateSignupInputs() {
   }
 
   // パスワード
-
   // 半角英数字と指定された記号のみ許可（スペースは不可）
   const allowedPasswordPattern =
     /^[A-Za-z0-9!"#$%&'()*+,\-./:;<=>?@\[\]\\^_`{|}~]+$/;
@@ -83,9 +90,94 @@ function validateSignupInputs() {
 }
 
 async function createAccount() {
+  if (isCreatingAccount || isAccountCreated) return;
   if (!validateSignupInputs()) return;
 
-  // アカウント作成処理は後で実装します。
+  const createButton = document.getElementById("create-account");
+  const originalButtonText = createButton.textContent;
+  const inputs = signupInputIds.map(id => document.getElementById(id));
+  const revealButton = document.getElementById("reveal-password");
+
+  isCreatingAccount = true;
+  createButton.disabled = true;
+  createButton.textContent = "送信中...";
+  createButton.setAttribute("aria-busy", "true");
+
+  inputs.forEach(input => {
+    input.disabled = true;
+  });
+
+  hidePassword();
+  revealButton.disabled = true;
+
+  try {
+    const { data, error } = await mySupabase.functions.invoke(
+      "create-user",
+      {
+        body: {
+          mode: "signup",
+          email: document.getElementById("email").value,
+          password: document.getElementById("password").value,
+          display_name: document.getElementById("display-name").value
+        }
+      }
+    );
+
+    if (error) {
+      let message =
+        "作成結果を確認できませんでした。通信状態を確認してください。";
+
+      if (error.context instanceof Response) {
+        const result = await error.context.json().catch(() => null);
+
+        if (typeof result?.error?.message === "string") {
+          message = result.error.message;
+        }
+      }
+
+      Toast.error(message);
+      return;
+    }
+
+    if (data?.success !== true || !data?.user?.user_id) {
+      Toast.error(
+        "作成結果を確認できませんでした。管理者に確認してください。"
+      );
+      return;
+    }
+
+    isAccountCreated = true;
+    document.getElementById("password").value = "";
+    createButton.textContent = "リクエスト送信済み";
+
+    // 成功メッセージをログイン画面へ渡す
+    sessionStorage.setItem(
+      "signupMessage",
+      "アカウント作成のリクエストを受け付けました。管理者の承認をお待ちください。"
+    );
+
+    location.href = "login.html";
+  } catch {
+    Toast.error(
+      isAccountCreated
+        ? "アカウントは作成されましたが、画面を切り替えられませんでした。「ログイン画面に戻る」からお戻りください。"
+        : "作成結果を確認できませんでした。通信状態を確認してください。"
+    );
+  } finally {
+    isCreatingAccount = false;
+    createButton.removeAttribute("aria-busy");
+
+    if (!isAccountCreated) {
+      createButton.disabled = false;
+      createButton.textContent = originalButtonText;
+
+      inputs.forEach(input => {
+        input.disabled = false;
+      });
+
+      revealButton.disabled = false;
+    }
+  }
 }
 
 //==============================

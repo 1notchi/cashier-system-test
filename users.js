@@ -30,6 +30,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   const status = document.getElementById("users-status");
   const content = document.getElementById("users-content");
 
+  initializeAddAccountModal();
+
   document.getElementById("cancelVerifyUserButton").addEventListener("click", closeVerifyUserModal);
   document.getElementById("closeVerifyUserButton").addEventListener("click", closeVerifyUserModal);
   document.getElementById("verifyAsStaffButton").addEventListener("click", () => submitUserReview("staff"));
@@ -263,6 +265,180 @@ function formatLastSignIn(value) {
     second: "2-digit",
     hourCycle: "h23"
   }).format(date);
+}
+
+// ==========================
+// アカウント追加モーダル
+// ==========================
+
+function initializeAddAccountModal() {
+  const modal = document.getElementById("addAccountModal");
+  const passwordInput = document.getElementById("addAccountPassword");
+  const revealButton = document.getElementById("revealAddAccountPassword");
+
+  addAccountInputIds.forEach(id => {
+    document.getElementById(id).addEventListener("input", () => {
+      clearAddAccountError(id);
+    });
+  });
+
+  document.getElementById("addAccountButton")
+    .addEventListener("click", () => {
+      if (!modal.open) {
+        modal.showModal();
+      }
+    });
+
+  document.getElementById("closeAddAccountButton")
+    .addEventListener("click", () => modal.close());
+
+  document.getElementById("cancelAddAccountButton")
+    .addEventListener("click", () => modal.close());
+
+  document.getElementById("createAccountButton")
+    .addEventListener("click", createAdminAccount);
+
+  function hidePassword() {
+    passwordInput.type = "password";
+  }
+
+  modal.addEventListener("close", () => {
+    addAccountInputIds.forEach(id => {
+      document.getElementById(id).value = "";
+      clearAddAccountError(id);
+    });
+
+    hidePassword();
+  });
+
+  // マウス・タッチ・ペンで押している間だけ表示
+  revealButton.addEventListener("pointerdown", event => {
+    if (!event.isPrimary || event.button !== 0) return;
+
+    revealButton.setPointerCapture(event.pointerId);
+    passwordInput.type = "text";
+  });
+
+  revealButton.addEventListener("pointerup", hidePassword);
+  revealButton.addEventListener("pointercancel", hidePassword);
+  revealButton.addEventListener("lostpointercapture", hidePassword);
+
+  // キーボードで押している間だけ表示
+  revealButton.addEventListener("keydown", event => {
+    if (event.key === " " || event.key === "Enter") {
+      event.preventDefault();
+
+      if (!event.repeat) {
+        passwordInput.type = "text";
+      }
+    }
+  });
+
+  revealButton.addEventListener("keyup", event => {
+    if (event.key === " " || event.key === "Enter") {
+      event.preventDefault();
+      hidePassword();
+    }
+  });
+
+  revealButton.addEventListener("blur", hidePassword);
+  window.addEventListener("blur", hidePassword);
+  window.addEventListener("pagehide", hidePassword);
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      hidePassword();
+    }
+  });
+
+  revealButton.addEventListener("contextmenu", event => {
+    event.preventDefault();
+  });
+}
+
+const addAccountInputIds = [
+  "addAccountEmail",
+  "addAccountPassword",
+  "addAccountName"
+];
+
+function clearAddAccountError(id) {
+  const input = document.getElementById(id);
+
+  input.classList.remove("input-error");
+  input.removeAttribute("aria-invalid");
+  document.getElementById(`${id}-error`).textContent = "";
+}
+
+function showAddAccountError(id, message) {
+  const input = document.getElementById(id);
+
+  input.classList.add("input-error");
+  input.setAttribute("aria-invalid", "true");
+  document.getElementById(`${id}-error`).textContent = message;
+}
+
+function validateAddAccountInputs() {
+  addAccountInputIds.forEach(clearAddAccountError);
+
+  const emailInput = document.getElementById("addAccountEmail");
+  const passwordInput = document.getElementById("addAccountPassword");
+  const nameInput = document.getElementById("addAccountName");
+
+  emailInput.value = emailInput.value.trim();
+  nameInput.value = nameInput.value.trim();
+
+  const errors = {};
+
+  if (!emailInput.value) {
+    errors.addAccountEmail = "メールアドレスを入力してください。";
+  } else if (emailInput.value.length > 254) {
+    errors.addAccountEmail =
+      "メールアドレスは254文字以内で入力してください。";
+  } else if (emailInput.validity.typeMismatch) {
+    errors.addAccountEmail =
+      "メールアドレスの形式が正しくありません。";
+  }
+
+  const allowedPasswordPattern =
+    /^[A-Za-z0-9!"#$%&'()*+,\-./:;<=>?@\[\]\\^_`{|}~]+$/;
+
+  if (passwordInput.value.length < 4) {
+    errors.addAccountPassword =
+      "パスワードは4文字以上で入力してください。";
+  } else if (passwordInput.value.length > 64) {
+    errors.addAccountPassword =
+      "パスワードは64文字以内で入力してください。";
+  } else if (!allowedPasswordPattern.test(passwordInput.value)) {
+    errors.addAccountPassword =
+      "パスワードには半角英数字と一部の記号のみ使用できます。スペースは使用できません。";
+  }
+
+  if (!nameInput.value) {
+    errors.addAccountName = "ユーザー名を入力してください。";
+  } else if (nameInput.value.length > 32) {
+    errors.addAccountName =
+      "ユーザー名は32文字以内で入力してください。";
+  }
+
+  Object.entries(errors).forEach(([id, message]) => {
+    showAddAccountError(id, message);
+  });
+
+  const firstErrorId = Object.keys(errors)[0];
+
+  if (firstErrorId) {
+    document.getElementById(firstErrorId).focus();
+    return false;
+  }
+
+  return true;
+}
+
+async function createAdminAccount() {
+  if (!validateAddAccountInputs()) return;
+
+  // Supabaseへの送信処理は後で実装します。
 }
 
 // ==========================

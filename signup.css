@@ -154,3 +154,8 @@ button:focus-visible {
 .password-reveal svg {
   pointer-events: none;
 }
+
+#create-account:disabled {
+  opacity: 0.6;
+  cursor: default;
+}

@@ -20,15 +20,23 @@
   <!-- 共通ヘッダー -->
   <div id="header-container"></div>
 
+  <!-- ユーザー一覧表 -->
   <main class="page-content">
     <p id="users-status" role="status">
       ユーザー情報を確認しています...
     </p>
 
     <div id="users-content" hidden>
-      <h1>ユーザー管理</h1>
-
       <div class="users-container">
+
+        <div class="users-toolbar">
+          <h1>ユーザー管理</h1>
+
+          <button id="addAccountButton" type="button" class="users-action-button users-add-button">
+            アカウントを追加
+          </button>
+        </div>
+
         <div id="usersTableWrapper" class="users-table-wrapper">
           <table class="users-table" aria-label="ユーザー一覧">
             <thead>
@@ -53,6 +61,61 @@
       </div>
     </div>
   </main>
+
+  <!-- アカウント追加モーダル -->
+  <dialog id="addAccountModal" class="users-verify-modal" aria-labelledby="addAccountTitle">
+
+    <button id="closeAddAccountButton" type="button" class="users-modal-close" aria-label="閉じる">&times;</button>
+
+    <h2 id="addAccountTitle" class="users-verify-title">
+      アカウントを追加
+    </h2>
+
+    <div class="users-add-fields">
+      <div class="users-add-input-group">
+        <label for="addAccountEmail">メールアドレス</label>
+        <input id="addAccountEmail" type="email" autocomplete="email" placeholder="example@example.com" maxlength="254"
+          required autofocus aria-describedby="addAccountEmail-error">
+        <div id="addAccountEmail-error" class="users-add-input-error" role="alert"></div>
+      </div>
+
+      <div class="users-add-input-group">
+        <label for="addAccountPassword">パスワード</label>
+
+        <div class="users-add-password-field">
+          <input id="addAccountPassword" type="password" autocomplete="new-password" placeholder="パスワード" minlength="4"
+            maxlength="64" required aria-describedby="addAccountPassword-error">
+
+          <button id="revealAddAccountPassword" type="button" class="users-add-password-reveal"
+            aria-label="押している間だけパスワードを表示" aria-controls="addAccountPassword">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"
+              aria-hidden="true" focusable="false">
+              <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
+          </button>
+        </div>
+        <div id="addAccountPassword-error" class="users-add-input-error" role="alert"></div>
+      </div>
+
+      <div class="users-add-input-group">
+        <label for="addAccountName">ユーザー名</label>
+        <input id="addAccountName" type="text" autocomplete="nickname" placeholder="ユーザー名" maxlength="32" required
+          aria-describedby="addAccountName-error">
+        <div id="addAccountName-error" class="users-add-input-error" role="alert"></div>
+      </div>
+    </div>
+
+    <div class="users-modal-buttons">
+      <button id="createAccountButton" type="button" class="users-action-button users-add-button">
+        作成
+      </button>
+
+      <button id="cancelAddAccountButton" type="button" class="users-action-button users-modal-cancel">
+        キャンセル
+      </button>
+    </div>
+  </dialog>
 
   <!-- 承認モーダル -->
   <dialog id="verifyUserModal" class="users-verify-modal" aria-labelledby="verifyUserTitle"

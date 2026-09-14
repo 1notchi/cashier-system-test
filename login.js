@@ -73,3 +73,13 @@ if (passwordResetMessage) {
   sessionStorage.removeItem("passwordResetMessage");
   Toast.success(passwordResetMessage);
 }
+
+// ===================================
+// アカウント作成画面からの遷移
+// ===================================
+const signupMessage = sessionStorage.getItem("signupMessage");
+
+if (signupMessage) {
+  sessionStorage.removeItem("signupMessage");
+  Toast.success(signupMessage);
+}
