@@ -28,8 +28,13 @@ const Toast = (() => {
    * @param {string} message 表示するメッセージ
    * @param {string} type トーストの種類
    */
-  function show(message, type) {
+  function show(message, type, container = document.body) {
     const toast = getToastElement();
+
+    // モーダル内の通知はモーダルへ、通常の通知はbodyへ配置する
+    if (toast.parentElement !== container) {
+      container.appendChild(toast);
+    }
 
     clearTimeout(toastTimer);
 
@@ -73,8 +78,8 @@ const Toast = (() => {
   /**
    * 失敗トーストを表示する。
    */
-  function error(message) {
-    show(message, "error");
+  function error(message, container = document.body) {
+    show(message, "error", container);
   }
 
   return {

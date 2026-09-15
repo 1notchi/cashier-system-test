@@ -21,6 +21,7 @@ let isProcessingPasswordReset = false;
 let currentAdminUserId = null;
 let userSettingsTarget = null;
 let isSavingUserSettings = false;
+let isCreatingAdminAccount = false;
 
 // ==========================
 // 初期化・権限確認
@@ -290,10 +291,17 @@ function initializeAddAccountModal() {
     });
 
   document.getElementById("closeAddAccountButton")
-    .addEventListener("click", () => modal.close());
+    .addEventListener("click", closeAddAccountModal);
 
   document.getElementById("cancelAddAccountButton")
-    .addEventListener("click", () => modal.close());
+    .addEventListener("click", closeAddAccountModal);
+
+  // 作成中はEscでも閉じない
+  modal.addEventListener("cancel", event => {
+    if (isCreatingAdminAccount) {
+      event.preventDefault();
+    }
+  });
 
   document.getElementById("createAccountButton")
     .addEventListener("click", createAdminAccount);
@@ -435,10 +443,128 @@ function validateAddAccountInputs() {
   return true;
 }
 
+function closeAddAccountModal() {
+  if (isCreatingAdminAccount) return;
+
+  document.getElementById("addAccountModal").close();
+}
+
+function setAddAccountBusy(busy) {
+  isCreatingAdminAccount = busy;
+
+  const modal = document.getElementById("addAccountModal");
+
+  modal.setAttribute("aria-busy", String(busy));
+
+  modal.querySelectorAll("input, select, button").forEach(element => {
+    element.disabled = busy;
+  });
+
+  document.getElementById("createAccountButton").textContent =
+    busy ? "作成中..." : "作成";
+
+  if (busy) {
+    document.getElementById("addAccountPassword").type = "password";
+  }
+}
+
+function showAddAccountFailure(message) {
+  Toast.error(message);
+
+  // dialogの背後に隠れないよう、トーストをモーダル内へ移す
+  const modal = document.getElementById("addAccountModal");
+  const toast = document.querySelector(".toast");
+
+  if (modal.open && toast) {
+    modal.appendChild(toast);
+  }
+}
+
 async function createAdminAccount() {
+  if (isCreatingAdminAccount) return;
   if (!validateAddAccountInputs()) return;
 
-  // Supabaseへの送信処理は後で実装します。
+  const modal = document.getElementById("addAccountModal");
+  const role = document.getElementById("addAccountRole").value;
+
+  if (!["staff", "viewer"].includes(role)) {
+    showAddAccountFailure("スタッフまたは閲覧者を選択してください。");
+    return;
+  }
+
+  const body = {
+    mode: "admin",
+    email: document.getElementById("addAccountEmail").value,
+    password: document.getElementById("addAccountPassword").value,
+    display_name: document.getElementById("addAccountName").value,
+    role
+  };
+
+  setAddAccountBusy(true);
+
+  try {
+    const { data, error } = await mySupabase.functions.invoke(
+      "create-user",
+      { body }
+    );
+
+    if (error) {
+      let message =
+        "作成結果を確認できませんでした。再送信前にユーザー一覧を確認してください。";
+
+      if (error.context instanceof Response) {
+        const result = await error.context.json().catch(() => null);
+
+        if (typeof result?.error?.message === "string") {
+          message = result.error.message;
+        }
+      }
+
+      showAddAccountFailure(message);
+      return;
+    }
+
+    if (data?.success !== true || !data?.user?.user_id) {
+      showAddAccountFailure(
+        "作成結果を確認できませんでした。再送信前にユーザー一覧を確認してください。"
+      );
+      return;
+    }
+  } catch {
+    showAddAccountFailure(
+      "作成結果を確認できませんでした。通信状態とユーザー一覧を確認してください。"
+    );
+    return;
+  } finally {
+    setAddAccountBusy(false);
+  }
+
+  // 作成に成功した場合だけ閉じる
+  document.getElementById("addAccountPassword").value = "";
+
+  const toast = modal.querySelector(".toast");
+  if (toast) {
+    document.body.appendChild(toast);
+  }
+
+  modal.close();
+
+  // 一覧更新中の追加操作を防ぐ
+  const addButton = document.getElementById("addAccountButton");
+  addButton.disabled = true;
+
+  try {
+    await loadUsers();
+
+    Toast.success("アカウントを作成しました。");
+  } catch {
+    // アカウント作成自体は成功している
+    Toast.success(
+      "アカウントを作成しました。一覧を更新できなかったため、画面を再読み込みしてください。"
+    );
+  } finally {
+    addButton.disabled = false;
+  }
 }
 
 // ==========================
@@ -653,8 +779,10 @@ async function saveUserSettings() {
   const isSelf = target.userId === currentAdminUserId;
 
   const updates = {
-    circle_id: document.getElementById("userSettingsCircleId").value.trim(),
-    display_name: document.getElementById("userSettingsName").value.trim()
+    circle_id:
+      document.getElementById("userSettingsCircleId").value.trim() || null,
+    display_name:
+      document.getElementById("userSettingsName").value.trim()
   };
 
   setUserSettingsBusy(true);
@@ -664,8 +792,8 @@ async function saveUserSettings() {
       throw new Error("ログイン情報を確認できません。再読み込みしてください。");
     }
 
-    if (!updates.circle_id || !updates.display_name) {
-      throw new Error("作サーIDと名前を入力してください。");
+    if (!updates.display_name) {
+      throw new Error("名前を入力してください。");
     }
 
     // 自分自身のロール・ステータスは更新しない
@@ -690,12 +818,18 @@ async function saveUserSettings() {
       updates.status = status;
     }
 
-    const { data, error } = await mySupabase
+    let query = mySupabase
       .from("profiles")
       .update(updates)
-      .eq("circle_id", target.originalCircleId)
-      .eq("user_id", target.userId)
-      .select("user_id");
+      .eq("user_id", target.userId);
+
+    if (target.originalCircleId === null) {
+      query = query.is("circle_id", null);
+    } else {
+      query = query.eq("circle_id", target.originalCircleId);
+    }
+
+    const { data, error } = await query.select("user_id");
 
     if (error) {
       if (error.code === "23505") {
@@ -725,10 +859,10 @@ async function saveUserSettings() {
     console.error("ユーザー設定の保存に失敗しました。", error);
 
     setUserSettingsBusy(false);
-    modal.close();
 
     Toast.error(
-      error.message || "ユーザー設定の保存に失敗しました。"
+      error.message || "ユーザー設定の保存に失敗しました。",
+      modal
     );
     return;
   }

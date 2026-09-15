@@ -318,6 +318,24 @@
   display: none;
 }
 
+#addAccountRole {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #cbd5e0;
+  border-radius: 8px;
+  background: #fff;
+  color: #2d3748;
+  font-family: inherit;
+  font-size: 15px;
+}
+
+#addAccountRole:focus {
+  outline: none;
+  border-color: #3182ce;
+  box-shadow: 0 0 0 3px rgba(49, 130, 206, .15);
+}
+
 /* ==========================
    承認モーダル
 ========================== */
